@@ -41,14 +41,16 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* Controlo de Abas */
-        body.tab-dash #view-tabela { display: none; }
-        body.tab-tabela #view-dashboard { display: none; }
+        body.tab-dash #view-tabela, body.tab-dash #view-detalhada, body.tab-dash #view-comparativo, body.tab-dash #view-paineis { display: none; }
+        body.tab-tabela #view-dashboard, body.tab-tabela #view-detalhada, body.tab-tabela #view-comparativo, body.tab-tabela #view-paineis { display: none; }
+        body.tab-detalhada #view-dashboard, body.tab-detalhada #view-tabela, body.tab-detalhada #view-comparativo, body.tab-detalhada #view-paineis { display: none; }
+        body.tab-compare #view-dashboard, body.tab-compare #view-tabela, body.tab-compare #view-detalhada, body.tab-compare #view-paineis { display: none; }
+        body.tab-paineis #view-dashboard, body.tab-paineis #view-tabela, body.tab-paineis #view-detalhada, body.tab-paineis #view-comparativo { display: none; }
 
         /* REGRAS ESPECÍFICAS PARA IMPRESSÃO A4 PAISAGEM / RELATÓRIO TABULAR */
         @media print {
-            @page { size: A4 landscape; margin: 8mm; } /* Margem reduzida para dar mais espaço vertical */
+            @page { size: A4 landscape; margin: 8mm; } 
             
-            /* Zera paddings web que geram páginas brancas no final */
             html, body { 
                 background-color: white !important; 
                 color: #1e293b !important; 
@@ -61,13 +63,9 @@
             }
             
             table { border-collapse: collapse !important; width: 100% !important; margin-bottom: 0 !important; }
-            
             .print-avoid-break { page-break-inside: avoid !important; }
-            
-            /* Forçar quebra de página antes de um elemento */
             .page-break-before { page-break-before: always !important; }
             
-            /* Engenharia de Gráficos: 2 por página cravados com bordas modernas e alinhamento em coluna */
             .print-chart-wrapper { 
                 page-break-inside: avoid !important; 
                 padding: 6px 4px 2px 4px !important; 
@@ -96,14 +94,16 @@
             
             #printAreaTabela .sticky-col, #printAreaTabela .sticky-header { position: static !important; box-shadow: none !important; }
 
-            body.tab-dash #printAreaTabela { display: none !important; }
-            body.tab-tabela #printAreaDashboard { display: none !important; }
+            /* Ocultar áreas de impressão inativas */
+            body.tab-dash #printAreaTabela, body.tab-dash #printAreaDetalhada, body.tab-dash #printAreaComparativo, body.tab-dash #printAreaPaineis { display: none !important; }
+            body.tab-tabela #printAreaDashboard, body.tab-tabela #printAreaDetalhada, body.tab-tabela #printAreaComparativo, body.tab-tabela #printAreaPaineis { display: none !important; }
+            body.tab-detalhada #printAreaDashboard, body.tab-detalhada #printAreaTabela, body.tab-detalhada #printAreaComparativo, body.tab-detalhada #printAreaPaineis { display: none !important; }
+            body.tab-compare #printAreaDashboard, body.tab-compare #printAreaTabela, body.tab-compare #printAreaDetalhada, body.tab-compare #printAreaPaineis { display: none !important; }
+            body.tab-paineis #printAreaDashboard, body.tab-paineis #printAreaTabela, body.tab-paineis #printAreaDetalhada, body.tab-paineis #printAreaComparativo { display: none !important; }
 
-            /* Remove overlay preventivamente na impressão */
             #syncOverlay, .print\:hidden { display: none !important; }
         }
 
-        /* Congelar primeira coluna da tabela web */
         .sticky-col { position: sticky; left: 0; z-index: 20; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .sticky-header { position: sticky; top: 0; z-index: 30; }
     </style>
@@ -127,6 +127,10 @@
                 </div>
             </div>
             <div class="flex gap-2">
+                <button type="button" onclick="toggleDataLabels()" id="btnToggleLabels" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 rounded-lg text-xs font-bold transition-all active:scale-95">
+                    <i data-lucide="tags" class="w-4 h-4"></i>
+                    <span id="lblToggleText" class="hidden sm:inline">Mostrar Rótulos</span>
+                </button>
                 <button type="button" onclick="preparePrint()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition-all active:scale-95">
                     <i data-lucide="printer" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Imprimir A4</span>
@@ -140,12 +144,21 @@
 
         <!-- SELECTOR DE ABAS -->
         <div class="flex justify-center mt-6">
-            <div class="bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 inline-flex gap-2">
+            <div class="bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 inline-flex flex-wrap justify-center gap-2 mx-4">
                 <button onclick="switchTab('DASH')" id="btnTabDash" class="px-5 py-2 rounded-lg text-sm font-bold bg-brand-600 text-white shadow-sm transition-all flex items-center gap-2">
                     <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Painel Gráfico
                 </button>
                 <button onclick="switchTab('TABELA')" id="btnTabTable" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
                     <i data-lucide="table" class="w-4 h-4"></i> Tabela Horária
+                </button>
+                <button onclick="switchTab('DETALHADA')" id="btnTabDetalhada" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i> Análise Detalhada
+                </button>
+                <button onclick="switchTab('COMPARE')" id="btnTabCompare" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
+                    <i data-lucide="git-compare" class="w-4 h-4"></i> Cruzamento
+                </button>
+                <button onclick="switchTab('PAINEIS')" id="btnTabPaineis" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Painéis Lado a Lado
                 </button>
             </div>
         </div>
@@ -161,9 +174,6 @@
                         <i data-lucide="thermometer-sun" class="text-brand-500"></i> Análise Agronômica
                     </h2>
                     <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
-                        <button type="button" onclick="toggleDataLabels()" id="btnToggleLabels" class="text-xs font-bold text-slate-500 hover:text-brand-600 flex items-center gap-1 transition-colors bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                            <i data-lucide="tags" class="w-4 h-4"></i> <span id="lblToggleText">Mostrar Rótulos</span>
-                        </button>
                         <button type="button" onclick="resetFilters()" class="text-xs font-bold text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors">
                             <i data-lucide="filter-x" class="w-4 h-4"></i> Limpar Filtros
                         </button>
@@ -174,15 +184,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Data Início</label>
-                        <input type="date" id="dashDataInicio" onchange="filterDashboard()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white cursor-pointer">
+                        <input type="date" id="dashDataInicio" onchange="refreshCurrentView()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white cursor-pointer">
                     </div>
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Data Término</label>
-                        <input type="date" id="dashDataFim" onchange="filterDashboard()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white cursor-pointer">
+                        <input type="date" id="dashDataFim" onchange="refreshCurrentView()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white cursor-pointer">
                     </div>
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Agrupamento</label>
-                        <select id="dashTempo" onchange="filterDashboard()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                        <select id="dashTempo" onchange="refreshCurrentView()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
                             <option value="HORA">Por Hora (Detalhado)</option>
                             <option value="DIA" selected>Diário (Média/Dia)</option>
                             <option value="SEMANA">Semanal</option>
@@ -190,7 +200,7 @@
                     </div>
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-1">Modo Visualização</label>
-                        <select id="dashCompare" onchange="filterDashboard()" class="w-full p-2 border border-brand-300 bg-brand-50 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 cursor-pointer">
+                        <select id="dashCompare" onchange="refreshCurrentView()" class="w-full p-2 border border-brand-300 bg-brand-50 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 cursor-pointer">
                             <option value="GERAL">Visão Geral</option>
                             <option value="LOCAL">Comparar Locais</option>
                         </select>
@@ -201,7 +211,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-white rounded-2xl border border-slate-200 mb-8 shadow-sm">
                     <div>
                         <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">Tipo de Métrica</label>
-                        <select id="dashMetrica" onchange="filterDashboard()" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 cursor-pointer">
+                        <select id="dashMetrica" onchange="refreshCurrentView()" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 cursor-pointer">
                             <option value="TODAS">Visão Completa (Todas)</option>
                             <option value="TERMO">Apenas Temp. e Umid.</option>
                             <option value="LUZ">Apenas Luminosidade</option>
@@ -222,13 +232,13 @@
                     </div>
                     <div>
                         <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">Aparelho</label>
-                        <select id="dashAparelho" onchange="filterDashboard()" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 cursor-pointer">
+                        <select id="dashAparelho" onchange="refreshCurrentView()" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 cursor-pointer">
                             <option value="TODOS">Todos</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">Período / Horário</label>
-                        <select id="dashPeriodo" onchange="filterDashboard()" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 cursor-pointer">
+                        <select id="dashPeriodo" onchange="refreshCurrentView()" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 cursor-pointer">
                             <option value="TODOS">Todos os Horários</option>
                             <optgroup label="Períodos do Dia">
                                 <option value="MADRUGADA">Madrugada (00h às 05h)</option>
@@ -330,7 +340,7 @@
                     </div>
                 </div>
 
-                <!-- Gráficos Web (Ajustados para widescreen para melhor print) -->
+                <!-- Gráficos Web -->
                 <div id="dashCharts" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div id="chart-wrapper-perfil" class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-inner flex flex-col transition-all duration-300 lg:col-span-2 hidden">
                         <div class="flex justify-between items-center mb-4">
@@ -401,7 +411,6 @@
                     </h2>
                 </div>
 
-                <!-- Filtros da Tabela -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Mês de Referência</label>
@@ -426,7 +435,7 @@
                 </div>
 
                 <div class="mb-2 flex items-center justify-between text-xs font-bold text-slate-500">
-                    <p>* O filtro de "Local" na aba anterior também afeta esta tabela.</p>
+                    <p>* O filtro de "Local" na aba principal também afeta esta tabela.</p>
                     <div class="flex gap-2 items-center">
                         <span class="w-3 h-3 rounded bg-blue-100 border border-blue-200"></span> Frio/Úmido
                         <span class="w-3 h-3 rounded bg-green-100 border border-green-200 ml-2"></span> Ideal
@@ -434,18 +443,268 @@
                     </div>
                 </div>
 
-                <!-- Tabela Responsiva -->
                 <div class="overflow-x-auto max-h-[70vh] rounded-xl border border-slate-200 relative custom-scrollbar shadow-inner bg-white">
                     <table class="w-full text-xs text-center border-collapse" style="min-width: 1200px;">
                         <thead class="bg-slate-800 text-white sticky-header shadow-md">
-                            <tr id="thead-tabela">
-                                <!-- Colunas geradas por JS -->
-                            </tr>
+                            <tr id="thead-tabela"></tr>
                         </thead>
                         <tbody id="tbody-tabela">
                             <tr><td colspan="26" class="p-8 text-center text-slate-400 font-bold">Selecione um mês para carregar os dados.</td></tr>
                         </tbody>
                     </table>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- ABA: ANÁLISE DETALHADA                                                    -->
+        <!-- ========================================================================= -->
+        <div id="view-detalhada" class="container mx-auto p-4 transition-opacity duration-300">
+            <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 mb-6">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="text-brand-500"></i> Estatísticas Aprofundadas
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Métrica Analisada</label>
+                        <select id="detMetrica" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-brand-300 bg-brand-50 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 cursor-pointer">
+                            <option value="CHUVA" selected>Pluviometria (mm)</option>
+                            <option value="T">Temperatura (°C)</option>
+                            <option value="U">Umidade Relativa (%)</option>
+                            <option value="LUZ">Luminosidade (kLux)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Ano Base (Para Gráfico de Pizza)</label>
+                        <select id="detAno" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer"></select>
+                    </div>
+                </div>
+
+                <div class="mb-4 flex items-center justify-between text-xs font-bold text-slate-500">
+                    <p>* Os filtros de "Local", "Aparelho" e "Data" da primeira aba afetam estes gráficos.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4">Histórico por Ano</h3>
+                        <div class="relative h-[300px] w-full"><canvas id="chartDetAno"></canvas></div>
+                    </div>
+                    
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4">Evolução Mensal Completa</h3>
+                        <div class="relative h-[300px] w-full"><canvas id="chartDetMesEvolucao"></canvas></div>
+                    </div>
+                    
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:col-span-2">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4">Tendência por Semana</h3>
+                        <div class="relative h-[300px] w-full"><canvas id="chartDetSemana"></canvas></div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-inner flex flex-col lg:col-span-2 items-center justify-center">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4 w-full text-left">Proporção Mensal (Ano Base)</h3>
+                        <div class="relative h-[350px] w-full max-w-lg"><canvas id="chartDetPizza"></canvas></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- ABA: COMPARATIVO EM LINHA                                                 -->
+        <!-- ========================================================================= -->
+        <div id="view-comparativo" class="container mx-auto p-4 transition-opacity duration-300">
+            <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 mb-6">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                        <i data-lucide="git-compare" class="text-brand-500"></i> Cruzamento de Linhas
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Métrica Analisada</label>
+                        <select id="compMetrica" onchange="generateComparativo()" class="w-full p-2 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 cursor-pointer">
+                            <option value="T" selected>Temperatura (°C)</option>
+                            <option value="U">Umidade Relativa (%)</option>
+                            <option value="LUZ">Luminosidade (kLux)</option>
+                            <option value="CHUVA">Pluviometria (mm)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Ano Base</label>
+                        <select id="compAno" onchange="generateComparativo()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer"></select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Mês Base</label>
+                        <select id="compMes" onchange="generateComparativo()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                            <option value="TODOS" selected>Todos os Meses</option>
+                            <option value="01">Janeiro</option>
+                            <option value="02">Fevereiro</option>
+                            <option value="03">Março</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Maio</option>
+                            <option value="06">Junho</option>
+                            <option value="07">Julho</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Período/Horário</label>
+                        <select id="compPeriodo" onchange="generateComparativo()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                            <option value="TODOS">Todos os Horários</option>
+                            <optgroup label="Períodos do Dia">
+                                <option value="MADRUGADA">Madrugada (00h às 05h)</option>
+                                <option value="MANHA">Manhã (06h às 11h)</option>
+                                <option value="TARDE">Tarde (12h às 17h)</option>
+                                <option value="NOITE">Noite (18h às 23h)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Agrupamento do Eixo</label>
+                        <select id="compAgrupamento" onchange="generateComparativo()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                            <option value="DIA" selected>Por Dia</option>
+                            <option value="SEMANA">Por Semana</option>
+                            <option value="MES">Por Mês</option>
+                            <option value="HORA">Por Hora</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 my-8 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                    <div class="w-full sm:w-1/3 flex flex-col items-center">
+                        <label class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Local Base</label>
+                        <select id="compLocal1" onchange="generateComparativo()" class="w-full sm:max-w-xs p-3 border-2 border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none font-black text-blue-700 bg-blue-50 cursor-pointer text-center shadow-sm"></select>
+                    </div>
+                    <div class="flex flex-col items-center justify-center shrink-0 mt-2 sm:mt-0">
+                        <div class="bg-slate-800 text-white rounded-full p-3 shadow-lg transform transition-transform hover:scale-110"><span class="text-sm font-black italic tracking-widest">VS</span></div>
+                    </div>
+                    <div class="w-full sm:w-1/3 flex flex-col items-center">
+                        <label class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Você deseja comparar com:</label>
+                        <select id="compLocal2" onchange="generateComparativo()" class="w-full sm:max-w-xs p-3 border-2 border-orange-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 outline-none font-black text-orange-700 bg-orange-50 cursor-pointer text-center shadow-sm"></select>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4 flex items-center justify-between">
+                        <span>Curva Comparativa</span>
+                        <span id="compResumoDiferenca" class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-lg"></span>
+                    </h3>
+                    <div class="relative h-[400px] w-full"><canvas id="chartComparativo"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- ABA: PAINÉIS LADO A LADO                                                  -->
+        <!-- ========================================================================= -->
+        <div id="view-paineis" class="container mx-auto p-4 transition-opacity duration-300">
+            <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 mb-6">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                    <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                        <i data-lucide="layout-dashboard" class="text-brand-500"></i> Painéis Mensais
+                    </h2>
+                </div>
+
+                <!-- Global Top KPI & Filtros Básicos -->
+                <div class="flex flex-col lg:flex-row gap-4 mb-6">
+                    <div class="bg-emerald-600 text-white rounded-2xl shadow-inner p-4 flex flex-col justify-center items-center shrink-0 lg:w-1/4">
+                        <span class="text-[10px] font-black uppercase tracking-widest opacity-80" id="pnTotalLbl">Total Global</span>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <span class="text-4xl font-black" id="pnTotalVal">--</span>
+                            <span class="text-sm font-bold opacity-80" id="pnTotalUnit"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <div class="flex flex-col col-span-1 sm:col-span-2 md:col-span-3 mb-2 border-b border-slate-200 pb-3">
+                            <label class="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-1">Métrica do Painel</label>
+                            <select id="pnMetrica" onchange="generatePaineis()" class="w-full sm:w-1/2 p-2.5 border border-brand-300 bg-brand-50 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 cursor-pointer">
+                                <option value="CHUVA" selected>Pluviometria (mm)</option>
+                                <option value="T">Temperatura (°C)</option>
+                                <option value="U">Umidade Relativa (%)</option>
+                                <option value="LUZ">Luminosidade (kLux)</option>
+                            </select>
+                        </div>
+
+                        <!-- Config Panel 1 -->
+                        <div class="flex flex-col p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                            <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2 border-b border-blue-200 pb-1">Configurar Painel Superior</span>
+                            <label class="text-[9px] font-bold text-slate-500 uppercase mt-1">Ano</label>
+                            <select id="pnAno1" onchange="generatePaineis()" class="w-full p-1.5 border border-slate-300 bg-white rounded-lg text-xs outline-none font-bold text-slate-700 cursor-pointer mb-2"></select>
+                            <label class="text-[9px] font-bold text-slate-500 uppercase">Local</label>
+                            <select id="pnLocal1" onchange="generatePaineis()" class="w-full p-1.5 border border-slate-300 bg-white rounded-lg text-xs outline-none font-bold text-slate-700 cursor-pointer"></select>
+                        </div>
+
+                        <!-- VS separator -->
+                        <div class="hidden md:flex items-center justify-center">
+                            <div class="bg-slate-200 text-slate-500 rounded-full w-10 h-10 flex items-center justify-center font-black italic shadow-inner">VS</div>
+                        </div>
+
+                        <!-- Config Panel 2 -->
+                        <div class="flex flex-col p-3 bg-fuchsia-50 border border-fuchsia-200 rounded-xl">
+                            <span class="text-[10px] font-black text-fuchsia-600 uppercase tracking-widest mb-2 border-b border-fuchsia-200 pb-1">Configurar Painel Inferior</span>
+                            <label class="text-[9px] font-bold text-slate-500 uppercase mt-1">Ano</label>
+                            <select id="pnAno2" onchange="generatePaineis()" class="w-full p-1.5 border border-slate-300 bg-white rounded-lg text-xs outline-none font-bold text-slate-700 cursor-pointer mb-2"></select>
+                            <label class="text-[9px] font-bold text-slate-500 uppercase">Local</label>
+                            <select id="pnLocal2" onchange="generatePaineis()" class="w-full p-1.5 border border-slate-300 bg-white rounded-lg text-xs outline-none font-bold text-slate-700 cursor-pointer"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAINEL 1 -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row mb-6 overflow-hidden">
+                    <div class="w-full lg:w-48 bg-slate-50 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 p-4">
+                         <div class="bg-blue-400 text-white rounded-xl p-3 text-center shadow-inner mb-4">
+                             <div class="text-[10px] uppercase tracking-widest opacity-90 font-black mb-1" id="pn1_title">--</div>
+                             <div class="text-3xl font-black" id="pn1_main_val">--</div>
+                             <div class="text-[11px] mt-2 font-bold px-2 py-0.5 rounded inline-block" id="pn1_diff">--</div>
+                         </div>
+                         <div class="text-center mb-3">
+                             <div class="text-[9px] text-slate-400 uppercase font-black tracking-widest" id="pn1_lbl_sec1">--</div>
+                             <div class="text-xl font-black text-slate-700 leading-none mt-1" id="pn1_val_sec1">--</div>
+                         </div>
+                         <div class="text-center">
+                             <div class="text-[9px] text-slate-400 uppercase font-black tracking-widest" id="pn1_lbl_sec2">--</div>
+                             <div class="text-xl font-black text-slate-700 leading-none mt-1" id="pn1_val_sec2">--</div>
+                         </div>
+                    </div>
+                    <div class="flex-1 p-2 sm:p-4 relative h-[250px] sm:h-[300px]">
+                         <canvas id="chartPainel1"></canvas>
+                    </div>
+                </div>
+
+                <!-- PAINEL 2 -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row overflow-hidden">
+                    <div class="w-full lg:w-48 bg-slate-50 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 p-4">
+                         <div class="bg-fuchsia-400 text-white rounded-xl p-3 text-center shadow-inner mb-4">
+                             <div class="text-[10px] uppercase tracking-widest opacity-90 font-black mb-1" id="pn2_title">--</div>
+                             <div class="text-3xl font-black" id="pn2_main_val">--</div>
+                             <div class="text-[11px] mt-2 font-bold px-2 py-0.5 rounded inline-block" id="pn2_diff">--</div>
+                         </div>
+                         <div class="text-center mb-3">
+                             <div class="text-[9px] text-slate-400 uppercase font-black tracking-widest" id="pn2_lbl_sec1">--</div>
+                             <div class="text-xl font-black text-slate-700 leading-none mt-1" id="pn2_val_sec1">--</div>
+                         </div>
+                         <div class="text-center">
+                             <div class="text-[9px] text-slate-400 uppercase font-black tracking-widest" id="pn2_lbl_sec2">--</div>
+                             <div class="text-xl font-black text-slate-700 leading-none mt-1" id="pn2_val_sec2">--</div>
+                         </div>
+                    </div>
+                    <div class="flex-1 p-2 sm:p-4 relative h-[250px] sm:h-[300px]">
+                         <canvas id="chartPainel2"></canvas>
+                    </div>
                 </div>
 
             </div>
@@ -472,7 +731,6 @@
     <!-- IMPRESSÃO DO DASHBOARD -->
     <div id="printAreaDashboard" class="hidden print:block w-full bg-white text-slate-800 p-0 m-0 font-sans">
         
-        <!-- CABEÇALHO PROFISSIONAL -->
         <div class="flex items-center justify-between border-b-2 border-brand-600 pb-2 mb-4">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center">
@@ -489,7 +747,6 @@
             </div>
         </div>
 
-        <!-- CONTEXTO E PARÂMETROS -->
         <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-4 flex justify-between items-center text-xs">
             <div class="flex flex-col"><span class="font-black text-slate-400 uppercase text-[8px] tracking-widest">Local Monitorado</span> <span id="p_Local" class="font-bold text-slate-800 text-xs">--</span></div>
             <div class="flex flex-col"><span class="font-black text-slate-400 uppercase text-[8px] tracking-widest">Período de Análise</span> <span id="p_Periodo" class="font-bold text-slate-800 text-xs">--</span></div>
@@ -497,7 +754,6 @@
             <div class="flex flex-col"><span class="font-black text-slate-400 uppercase text-[8px] tracking-widest">Filtro Horário</span> <span id="p_Horario" class="font-bold text-slate-800 text-xs">--</span></div>
         </div>
 
-        <!-- KPIs GLOBAIS -->
         <div class="mb-4 print-avoid-break">
             <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-200 pb-1">1. Indicadores Chave de Desempenho (KPIs)</h3>
             <table class="w-full text-center border-collapse">
@@ -532,7 +788,6 @@
             </table>
         </div>
 
-        <!-- PARECER AGRONÔMICO (IA) -->
         <div class="mb-4">
             <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-200 pb-1">2. Parecer Técnico Especializado (IA)</h3>
             <div class="bg-brand-50 border-l-4 border-brand-500 p-3 rounded-r-xl">
@@ -540,48 +795,15 @@
             </div>
         </div>
 
-        <!-- ANÁLISE GRÁFICA -->
-        <!-- Força uma quebra de página AQUI para os gráficos ficarem numa nova página -->
         <div class="page-break-before">
             <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-1">3. Curvas de Comportamento e Sazonalidade</h3>
             <div class="grid grid-cols-1 gap-6" id="p_ChartGrid">
-                
-                <div id="p_BoxPerfil" class="print-chart-wrapper">
-                    <span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Perfil Horário Médio (Termo-Higrométrico)</span>
-                    <img id="p_ImgPerfil" class="print-chart-img">
-                    <div id="p_PerfilResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div>
-                </div>
-
-                <div id="p_BoxTemp" class="print-chart-wrapper">
-                    <span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Amplitude Térmica (Temperatura Mín/Máx)</span>
-                    <img id="p_ImgTemp" class="print-chart-img">
-                    <div id="p_TempResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div>
-                </div>
-                
-                <div id="p_BoxUmid" class="print-chart-wrapper">
-                    <span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Variação de Umidade (Mín/Máx)</span>
-                    <img id="p_ImgUmid" class="print-chart-img">
-                    <div id="p_UmidResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div>
-                </div>
-                
-                <div id="p_BoxVPD" class="print-chart-wrapper">
-                    <span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Déficit de Pressão de Vapor (VPD)</span>
-                    <img id="p_ImgVPD" class="print-chart-img">
-                    <div id="p_VPDResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div>
-                </div>
-                
-                <div id="p_BoxLuz" class="print-chart-wrapper">
-                    <span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Radiação Solar (Luminosidade)</span>
-                    <img id="p_ImgLuz" class="print-chart-img">
-                    <div id="p_LuzResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div>
-                </div>
-                
-                <div id="p_BoxChuva" class="print-chart-wrapper">
-                    <span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Pluviometria Acumulada</span>
-                    <img id="p_ImgChuva" class="print-chart-img">
-                    <div id="p_ChuvaResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div>
-                </div>
-
+                <div id="p_BoxPerfil" class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Perfil Horário Médio</span><img id="p_ImgPerfil" class="print-chart-img"><div id="p_PerfilResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div></div>
+                <div id="p_BoxTemp" class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Amplitude Térmica</span><img id="p_ImgTemp" class="print-chart-img"><div id="p_TempResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div></div>
+                <div id="p_BoxUmid" class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Variação de Umidade</span><img id="p_ImgUmid" class="print-chart-img"><div id="p_UmidResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div></div>
+                <div id="p_BoxVPD" class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Déficit de Pressão de Vapor (VPD)</span><img id="p_ImgVPD" class="print-chart-img"><div id="p_VPDResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div></div>
+                <div id="p_BoxLuz" class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Radiação Solar</span><img id="p_ImgLuz" class="print-chart-img"><div id="p_LuzResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div></div>
+                <div id="p_BoxChuva" class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Pluviometria Acumulada</span><img id="p_ImgChuva" class="print-chart-img"><div id="p_ChuvaResumo" class="mt-2 text-[11px] w-full text-center text-slate-600"></div></div>
             </div>
         </div>
     </div>
@@ -601,21 +823,73 @@
             * Documento gerado automaticamente pelo Sistema de Monitoramento SPG.
         </div>
     </div>
+
+    <!-- IMPRESSÃO DETALHADA -->
+    <div id="printAreaDetalhada" class="hidden print:block w-full bg-white text-slate-800 p-0 m-0 font-sans">
+        <h1 class="text-xl font-black uppercase text-center mb-4 border-b-2 border-brand-600 pb-2 text-slate-800" id="pd_Titulo">Análise Detalhada</h1>
+        <div class="grid grid-cols-1 gap-6">
+            <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Histórico Anual</span><img id="pd_ImgAno" class="print-chart-img"></div>
+            <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Evolução Mensal</span><img id="pd_ImgMes" class="print-chart-img"></div>
+            <div class="page-break-before print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Tendência Semanal</span><img id="pd_ImgSem" class="print-chart-img"></div>
+            <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Proporção Mensal</span><img id="pd_ImgPizza" class="print-chart-img" style="height: 300px !important;"></div>
+        </div>
+    </div>
+
+    <!-- IMPRESSÃO DO COMPARATIVO -->
+    <div id="printAreaComparativo" class="hidden print:block w-full bg-white text-slate-800 p-0 m-0 font-sans">
+        <h1 class="text-xl font-black uppercase text-center mb-4 border-b-2 border-brand-600 pb-2 text-slate-800" id="pc_Titulo">Relatório Comparativo</h1>
+        <div class="flex justify-between text-[10px] font-bold uppercase mb-4 mt-2 text-slate-600">
+            <span id="pc_LocalBase">Local Base: --</span>
+            <span id="pc_LocalComp">Local Comparado: --</span>
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+            <div class="print-chart-wrapper" style="height: 400px !important;">
+                <span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Curva de Cruzamento</span>
+                <img id="pc_ImgCompare" class="print-chart-img" style="height: 360px !important;">
+            </div>
+        </div>
+        <div class="mt-8 text-center text-[10px] font-bold text-slate-800" id="pc_Resumo"></div>
+    </div>
+
+    <!-- IMPRESSÃO DOS PAINÉIS -->
+    <div id="printAreaPaineis" class="hidden print:block w-full bg-white text-slate-800 p-0 m-0 font-sans">
+        <h1 class="text-xl font-black uppercase text-center mb-4 border-b-2 border-brand-600 pb-2 text-slate-800" id="pp_Titulo">Painéis Analíticos Lado a Lado</h1>
+        <div class="flex justify-between text-[10px] font-bold uppercase mb-4 mt-2 text-slate-600">
+            <span id="pp_Total">Total Global: --</span>
+            <span>Emissão: <span id="pp_DataEmissao">--</span></span>
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+            <div class="print-chart-wrapper" style="height: 400px !important;">
+                <span class="text-sm font-black text-blue-600 uppercase tracking-wider mb-1" id="pp_Lbl1">Painel Superior</span>
+                <img id="pp_ImgP1" class="print-chart-img" style="height: 340px !important;">
+                <div id="pp_Resumo1" class="text-[10px] font-bold mt-2"></div>
+            </div>
+            <div class="page-break-before print-chart-wrapper" style="height: 400px !important;">
+                <span class="text-sm font-black text-fuchsia-600 uppercase tracking-wider mb-1" id="pp_Lbl2">Painel Inferior</span>
+                <img id="pp_ImgP2" class="print-chart-img" style="height: 340px !important;">
+                <div id="pp_Resumo2" class="text-[10px] font-bold mt-2"></div>
+            </div>
+        </div>
+    </div>
     <!-- ========================================================================= -->
 
     <script>
+        // --- 1. CONFIGURAÇÕES E INICIALIZAÇÃO ---
         Chart.register(ChartDataLabels);
         lucide.createIcons();
 
         let rawClimateData = [];
         let chartPerfilInst = null, chartTempInst = null, chartUmidInst = null;
         let chartLuzInst = null, chartVPDInst = null, chartChuvaInst = null;
+        let chartDetAnoInst = null, chartDetMesInst = null, chartDetSemInst = null, chartDetPizzaInst = null;
+        let chartCompareInst = null;
+        let chartPainel1Inst = null, chartPainel2Inst = null;
+        
         let showDataLabels = false;
         let currentTab = 'DASH';
 
         const hasData = (val) => val !== undefined && val !== null && String(val).trim() !== '';
         
-        // Função formatadora blindada contra falhas de null e indefinidos
         const fmt = (v, dec=1) => {
             if (v === null || v === undefined) return '--';
             const num = Number(v);
@@ -629,13 +903,9 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            // Inicializar Mês Atual na Tabela
             document.getElementById('tabMonth').value = new Date().toISOString().slice(0,7);
-            
-            // Construir thead da tabela dinamicamente
             buildTableHeader();
 
-            // Adicionar horários ao select do Dashboard
             let hrHtml = '';
             for(let i=0; i<24; i++) {
                 let hStr = String(i).padStart(2, '0');
@@ -645,7 +915,6 @@
 
             loadDashboardData();
             
-            // Fechar dropdown de locais ao clicar fora
             document.addEventListener('click', (e) => {
                 const container = document.getElementById('dashLocalOptions');
                 const display = document.getElementById('dashLocalDisplay');
@@ -655,37 +924,44 @@
             });
         });
 
-        // --- NAVEGAÇÃO DE ABAS ---
+        // --- 2. NAVEGAÇÃO E ABA ATIVA ---
         function switchTab(tab) {
             currentTab = tab;
             const bDash = document.getElementById('btnTabDash');
             const bTab = document.getElementById('btnTabTable');
+            const bDet = document.getElementById('btnTabDetalhada');
+            const bComp = document.getElementById('btnTabCompare');
+            const bPan = document.getElementById('btnTabPaineis');
+            
+            const activeClass = "px-5 py-2 rounded-lg text-sm font-bold bg-brand-600 text-white shadow-sm transition-all flex items-center gap-2";
+            const inactiveClass = "px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2";
 
-            if(tab === 'DASH') {
-                document.body.classList.remove('tab-tabela');
-                document.body.classList.add('tab-dash');
-                
-                bDash.className = "px-5 py-2 rounded-lg text-sm font-bold bg-brand-600 text-white shadow-sm transition-all flex items-center gap-2";
-                bTab.className = "px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2";
-                
-                filterDashboard();
-            } else {
-                document.body.classList.remove('tab-dash');
-                document.body.classList.add('tab-tabela');
-                
-                bDash.className = "px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2";
-                bTab.className = "px-5 py-2 rounded-lg text-sm font-bold bg-brand-600 text-white shadow-sm transition-all flex items-center gap-2";
-                
-                generateTable();
-            }
+            bDash.className = tab === 'DASH' ? activeClass : inactiveClass;
+            bTab.className = tab === 'TABELA' ? activeClass : inactiveClass;
+            bDet.className = tab === 'DETALHADA' ? activeClass : inactiveClass;
+            bComp.className = tab === 'COMPARE' ? activeClass : inactiveClass;
+            bPan.className = tab === 'PAINEIS' ? activeClass : inactiveClass;
+
+            document.body.classList.remove('tab-dash', 'tab-tabela', 'tab-detalhada', 'tab-compare', 'tab-paineis');
+            document.body.classList.add('tab-' + tab.toLowerCase());
+
+            refreshCurrentView();
         }
 
-        // --- FUNÇÕES DO DROPDOWN MÚLTIPLO DE LOCAIS ---
+        function refreshCurrentView() {
+            if (currentTab === 'DASH') filterDashboard();
+            else if (currentTab === 'TABELA') generateTable();
+            else if (currentTab === 'DETALHADA') { updateYearsDropdowns(); generateDetailedAnalysis(); }
+            else if (currentTab === 'COMPARE') { updateYearsDropdowns(); generateComparativo(); }
+            else if (currentTab === 'PAINEIS') { updateYearsDropdowns(); generatePaineis(); }
+        }
+
+        // --- 3. FILTROS E DROPDOWNS MULTIPLOS ---
         function toggleAllLocais(source) {
             const checkboxes = document.querySelectorAll('input[name="localCb"]');
             checkboxes.forEach(cb => cb.checked = source.checked);
             updateLocalText();
-            currentTab === 'DASH' ? filterDashboard() : generateTable();
+            refreshCurrentView();
         }
 
         function toggleSingleLocal() {
@@ -694,7 +970,7 @@
             const todosCb = document.querySelector('input[value="TODOS_LOCAIS"]');
             if (todosCb) todosCb.checked = allChecked;
             updateLocalText();
-            currentTab === 'DASH' ? filterDashboard() : generateTable();
+            refreshCurrentView();
         }
 
         function selectOnlyLocal(localName, event) {
@@ -705,7 +981,7 @@
             checkboxes.forEach(cb => { cb.checked = (cb.value === localName); });
             updateLocalText();
             document.getElementById('dashLocalOptions').classList.add('hidden');
-            currentTab === 'DASH' ? filterDashboard() : generateTable();
+            refreshCurrentView();
         }
 
         function updateLocalText() {
@@ -729,13 +1005,14 @@
             return Array.from(checked).map(cb => cb.value);
         }
 
-        // --- IMPRESSÃO ---
+        // --- 4. IMPRESSÃO EM PDF ---
         function preparePrint() {
-            if (currentTab === 'DASH') {
-                preparePrintDashboard();
-            } else {
-                preparePrintTable();
-            }
+            if (currentTab === 'DASH') preparePrintDashboard();
+            else if (currentTab === 'TABELA') preparePrintTable();
+            else if (currentTab === 'DETALHADA') preparePrintDetalhada();
+            else if (currentTab === 'COMPARE') preparePrintComparativo();
+            else if (currentTab === 'PAINEIS') preparePrintPaineis();
+            
             setTimeout(() => window.print(), 500);
         }
 
@@ -743,22 +1020,15 @@
             const mVal = document.getElementById('tabMonth').value;
             const pMes = mVal ? mVal.split('-').reverse().join('/') : '--';
             const met = document.getElementById('tabTableMetrica').value === 'T' ? 'Temperatura (°C)' : 'Umidade (%)';
-            
             const ptTitulo = document.getElementById('pt_Titulo');
             if (ptTitulo) ptTitulo.innerText = `Relatório Tabular de ${met} - Mês ${pMes}`;
-            
             const ptDataEmissao = document.getElementById('pt_DataEmissao');
             if (ptDataEmissao) ptDataEmissao.innerText = `Emissão: ` + new Date().toLocaleString('pt-BR');
-            
             const locals = getSelectedLocals();
-            let localText = 'Todos';
-            if (locals.length === 0) localText = 'Nenhum';
-            else if (!locals.includes('TODOS')) localText = locals.join(', ');
-            
+            let localText = locals.length === 0 ? 'Nenhum' : (!locals.includes('TODOS') ? locals.join(', ') : 'Todos');
             const ptLocal = document.getElementById('pt_Local');
             if (ptLocal) ptLocal.innerText = `Local: ${localText}`;
 
-            // Clonar HTML da web para print
             const ptThead = document.getElementById('pt_Thead');
             const ptTbody = document.getElementById('pt_Tbody');
             const theadTabela = document.getElementById('thead-tabela');
@@ -766,6 +1036,69 @@
 
             if (ptThead && theadTabela) ptThead.innerHTML = theadTabela.innerHTML;
             if (ptTbody && tbodyTabela) ptTbody.innerHTML = tbodyTabela.innerHTML;
+        }
+
+        function preparePrintDetalhada() {
+            const elMet = document.getElementById('detMetrica');
+            const met = elMet ? elMet.options[elMet.selectedIndex].text : 'Métrica';
+            const ptTit = document.getElementById('pd_Titulo');
+            if(ptTit) ptTit.innerText = `Análise Detalhada - ${met}`;
+            
+            const charts = [
+                { inst: chartDetAnoInst, img: 'pd_ImgAno' },
+                { inst: chartDetMesInst, img: 'pd_ImgMes' },
+                { inst: chartDetSemInst, img: 'pd_ImgSem' },
+                { inst: chartDetPizzaInst, img: 'pd_ImgPizza' }
+            ];
+            
+            charts.forEach(c => {
+                const img = document.getElementById(c.img);
+                if (c.inst && img) img.src = c.inst.toBase64Image();
+            });
+        }
+        
+        function preparePrintComparativo() {
+            const elMet = document.getElementById('compMetrica');
+            const met = elMet ? elMet.options[elMet.selectedIndex].text : 'Métrica';
+            const ptTit = document.getElementById('pc_Titulo');
+            if(ptTit) ptTit.innerText = `Relatório Comparativo - ${met}`;
+            const ptBase = document.getElementById('pc_LocalBase');
+            if(ptBase) ptBase.innerText = `Local Base: ` + (document.getElementById('compLocal1').value || '--');
+            const ptComp = document.getElementById('pc_LocalComp');
+            if(ptComp) ptComp.innerText = `Local Comparado: ` + (document.getElementById('compLocal2').value || '--');
+
+            const img = document.getElementById('pc_ImgCompare');
+            if (chartCompareInst && img) img.src = chartCompareInst.toBase64Image();
+            
+            const resWeb = document.getElementById('compResumoDiferenca');
+            const resPrint = document.getElementById('pc_Resumo');
+            if (resWeb && resPrint) resPrint.innerHTML = resWeb.innerHTML;
+        }
+
+        function preparePrintPaineis() {
+            const elMet = document.getElementById('pnMetrica');
+            const met = elMet ? elMet.options[elMet.selectedIndex].text : 'Métrica';
+            document.getElementById('pp_Titulo').innerText = `Painéis Mensais Lado a Lado - ${met}`;
+            document.getElementById('pp_DataEmissao').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('pp_Total').innerText = `Total Global: ${document.getElementById('pnTotalVal').innerText} ${document.getElementById('pnTotalUnit').innerText}`;
+            
+            document.getElementById('pp_Lbl1').innerText = document.getElementById('pn1_title').innerText;
+            document.getElementById('pp_Lbl2').innerText = document.getElementById('pn2_title').innerText;
+            
+            document.getElementById('pp_Resumo1').innerHTML = `
+                Principal: ${document.getElementById('pn1_main_val').innerText} | 
+                ${document.getElementById('pn1_lbl_sec1').innerText}: ${document.getElementById('pn1_val_sec1').innerText} | 
+                ${document.getElementById('pn1_lbl_sec2').innerText}: ${document.getElementById('pn1_val_sec2').innerText}
+            `;
+            
+            document.getElementById('pp_Resumo2').innerHTML = `
+                Principal: ${document.getElementById('pn2_main_val').innerText} | 
+                ${document.getElementById('pn2_lbl_sec1').innerText}: ${document.getElementById('pn2_val_sec1').innerText} | 
+                ${document.getElementById('pn2_lbl_sec2').innerText}: ${document.getElementById('pn2_val_sec2').innerText}
+            `;
+
+            if(chartPainel1Inst) document.getElementById('pp_ImgP1').src = chartPainel1Inst.toBase64Image();
+            if(chartPainel2Inst) document.getElementById('pp_ImgP2').src = chartPainel2Inst.toBase64Image();
         }
 
         function preparePrintDashboard() {
@@ -877,6 +1210,7 @@
             });
         }
 
+        // --- 5. CARREGAMENTO DE DADOS E MOCK ---
         async function loadDashboardData() {
             document.getElementById('syncOverlay').classList.remove('hidden');
             const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzgTBTsaWDhsr6u50NTMJFKktjI1KNU747meTmwu83iG6uQzCVN1gdxmAPsK2XNKVx/exec"; 
@@ -896,17 +1230,16 @@
                 
                 if (errorOccurred && rawClimateData.length === 0) {
                     console.error("Falha ao baixar dados de ambos os scripts.");
-                    // Se estiver completamente vazio e com erro, usamos o Mock para não quebrar a tela
                     rawClimateData = generateMockClimateData();
                 }
 
                 updateSmartDropdowns();
-                currentTab === 'DASH' ? filterDashboard() : generateTable();
+                refreshCurrentView();
             } catch (e) {
                 console.error("Erro Fatal no carregamento:", e);
                 rawClimateData = generateMockClimateData();
                 updateSmartDropdowns();
-                currentTab === 'DASH' ? filterDashboard() : generateTable();
+                refreshCurrentView();
             }
             document.getElementById('syncOverlay').classList.add('hidden');
             document.getElementById('dashKPIs').classList.remove('hidden');
@@ -925,7 +1258,7 @@
                 todosCb.checked = true;
                 toggleAllLocais(todosCb); 
             } else {
-                currentTab === 'DASH' ? filterDashboard() : generateTable();
+                refreshCurrentView();
             }
         }
 
@@ -937,13 +1270,13 @@
             if (showDataLabels) {
                 btnText.innerText = "Ocultar Rótulos";
                 btn.classList.add('bg-brand-50', 'text-brand-700', 'border-brand-200');
-                btn.classList.remove('bg-slate-100', 'text-slate-500', 'border-slate-200');
+                btn.classList.remove('bg-slate-100', 'text-slate-600', 'border-slate-200');
             } else {
                 btnText.innerText = "Mostrar Rótulos";
                 btn.classList.remove('bg-brand-50', 'text-brand-700', 'border-brand-200');
-                btn.classList.add('bg-slate-100', 'text-slate-500', 'border-slate-200');
+                btn.classList.add('bg-slate-100', 'text-slate-600', 'border-slate-200');
             }
-            filterDashboard(); 
+            refreshCurrentView(); 
         }
 
         function updateSmartDropdowns() {
@@ -955,9 +1288,9 @@
                        (metrica === 'TERMO' && hasData(row.temperatura)) || 
                        (metrica === 'LUZ' && hasData(row.luminosidade)) || 
                        (metrica === 'CHUVA' && hasData(row.chuva))) {
-                        // O String() protege contra o Google Sheets enviar números puros (ex: estufa 1 se tornar apenas 1)
-                        if (row.local !== undefined && row.local !== null) locais.add(String(row.local).trim());
-                        if (row.aparelho !== undefined && row.aparelho !== null) aparelhos.add(String(row.aparelho).trim());
+                        
+                        if (row.local !== undefined && row.local !== null && String(row.local).trim() !== '') locais.add(String(row.local).trim());
+                        if (row.aparelho !== undefined && row.aparelho !== null && String(row.aparelho).trim() !== '') aparelhos.add(String(row.aparelho).trim());
                     }
                 });
                 
@@ -969,6 +1302,28 @@
                 };
                 updateSel('dashAparelho', aparelhos, 'Aparelhos');
 
+                // Popula Dropdown de LOCAIS da aba Comparativo e Painéis
+                const sortedLocais = Array.from(locais).sort();
+                const htmlLocaisComp = sortedLocais.map(l => `<option value="${l}">${l}</option>`).join('');
+                const htmlLocaisPan = `<option value="TODOS">Todos os Locais</option>` + htmlLocaisComp;
+                
+                const syncDrop = (id, defIdx) => {
+                    const el = document.getElementById(id);
+                    if(el) {
+                        const val = el.value;
+                        el.innerHTML = id.includes('pnLocal') ? htmlLocaisPan : htmlLocaisComp;
+                        const validOpts = Array.from(el.options).map(o=>o.value);
+                        if(validOpts.includes(val)) el.value = val;
+                        else if (validOpts.length > defIdx) el.value = validOpts[defIdx];
+                    }
+                };
+
+                syncDrop('compLocal1', 0);
+                syncDrop('compLocal2', 1);
+                syncDrop('pnLocal1', 0); 
+                syncDrop('pnLocal2', 0);
+
+                // Dropdown Múltiplo do Dashboard Principal
                 const localContainer = document.getElementById('dashLocalOptions');
                 const localCbs = document.querySelectorAll('input[name="localCb"]');
                 let currentLocal = [];
@@ -988,7 +1343,7 @@
                     <div class="h-px w-full bg-slate-200 my-1"></div>
                 `;
                 
-                Array.from(locais).sort().forEach(l => {
+                sortedLocais.forEach(l => {
                     const checked = isAllChecked || currentLocal.includes(l) ? 'checked' : '';
                     localHtml += `
                         <div class="group flex items-center justify-between p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
@@ -1009,158 +1364,561 @@
             }
         }
 
-        // ========================================================================= //
-        // MÓDULO: TABELA DE DADOS HORÁRIOS
-        // ========================================================================= //
-        function buildTableHeader() {
-            let tr = `<th class="p-2 border border-slate-700 bg-slate-900 sticky-col min-w-[50px] uppercase font-black text-[10px] tracking-widest z-30">Dia</th>`;
-            for(let i=0; i<24; i++) {
-                tr += `<th class="p-2 border border-slate-700 min-w-[50px] font-black">${String(i).padStart(2,'0')}h</th>`;
-            }
-            tr += `<th class="p-2 border border-slate-700 bg-slate-900 font-black min-w-[70px] uppercase text-[10px] tracking-widest">Resumo<br>Diário</th>`;
-            const thead = document.getElementById('thead-tabela');
-            if(thead) thead.innerHTML = tr;
+        function updateYearsDropdowns() {
+            if(!rawClimateData || rawClimateData.length === 0) return;
+            const years = new Set();
+            rawClimateData.forEach(row => {
+                if(row && row.data) {
+                    const parts = String(row.data).split('/');
+                    if(parts.length >= 3) {
+                        years.add(parts[2].split(' ')[0]);
+                    }
+                }
+            });
+            
+            const sortedYears = Array.from(years).sort((a,b) => b - a); 
+            const htmlTodos = `<option value="TODOS">Todos os Anos</option>` + sortedYears.map(y => `<option value="${y}">${y}</option>`).join('');
+            const htmlSemTodos = sortedYears.map(y => `<option value="${y}">${y}</option>`).join('');
+            
+            const setDropdown = (id, allowTodos, defIdx) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const currentVal = el.value;
+                    el.innerHTML = allowTodos ? htmlTodos : htmlSemTodos;
+                    const validOpts = Array.from(el.options).map(o=>o.value);
+                    if (validOpts.includes(currentVal)) {
+                        el.value = currentVal;
+                    } else if (validOpts.length > defIdx) {
+                        el.value = validOpts[defIdx]; 
+                    }
+                }
+            };
+            
+            setDropdown('detAno', true, 0);
+            setDropdown('compAno', true, 0);
+            setDropdown('pnAno1', false, 0); 
+            setDropdown('pnAno2', false, 1); 
         }
 
-        function getHeatmapColor(v, metrica) {
-            if(v === null || isNaN(v)) return 'transparent';
-            if(metrica === 'T') {
-                if(v < 15) return '#dbeafe'; // Muito frio (Azul)
-                if(v < 20) return '#dcfce7'; // Frio (Verde Claro)
-                if(v < 25) return '#fef9c3'; // Ameno (Amarelo Claro)
-                if(v < 30) return '#fef08a'; // Quente (Amarelo)
-                if(v < 35) return '#fed7aa'; // Muito Quente (Laranja)
-                return '#fca5a5';            // Crítico (Vermelho)
-            } else { // Umidade
-                if(v < 50) return '#fed7aa'; // Seco (Laranja)
-                if(v < 70) return '#fef08a'; // Baixa (Amarelo)
-                if(v < 85) return '#dcfce7'; // Ideal (Verde)
-                return '#dbeafe';            // Saturado (Azul)
-            }
-        }
+        // --- 6. MÓDULO: PAINÉIS LADO A LADO ---
+        function generatePaineis() {
+            if (!rawClimateData || rawClimateData.length === 0) return;
 
-        function generateTable() {
-            try {
-                const metricaEl = document.getElementById('tabTableMetrica');
-                const modoEl = document.getElementById('tabTableModo');
-                const monthValEl = document.getElementById('tabMonth');
-                
-                if (!metricaEl || !modoEl || !monthValEl) return;
-                
-                const metrica = metricaEl.value;
-                const modo = modoEl.value;
-                const monthVal = monthValEl.value; 
-                const selectedLocals = getSelectedLocals();
+            const metrica = document.getElementById('pnMetrica').value;
+            const l1 = document.getElementById('pnLocal1').value;
+            const a1 = document.getElementById('pnAno1').value;
+            const l2 = document.getElementById('pnLocal2').value;
+            const a2 = document.getElementById('pnAno2').value;
 
-                const tbody = document.getElementById('tbody-tabela');
-                if(!tbody) return;
+            const processPanelData = (ano, local) => {
+                let sum = 0, count = 0, max = -Infinity, min = Infinity;
+                let diasComChuva = 0, diasSemChuva = 0;
+                let monthData = Array(12).fill(null).map(()=>[]); 
+                let dailyRain = {};
 
-                if(!monthVal) {
-                    tbody.innerHTML = `<tr><td colspan="26" class="p-8 text-center text-slate-400 font-bold">Selecione um mês.</td></tr>`;
-                    return;
-                }
-                if(rawClimateData.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="26" class="p-8 text-center text-slate-400 font-bold">Sem dados sincronizados.</td></tr>`;
-                    return;
-                }
-
-                const [yearStr, monthStr] = monthVal.split('-');
-                const daysInMonth = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
-
-                // 1. Inicializa Matriz [Dia][Hora] = Array de valores
-                let matrix = {};
-                for(let d=1; d<=daysInMonth; d++) {
-                    matrix[d] = { h: {}, dAll: [] };
-                    for(let hr=0; hr<24; hr++) matrix[d].h[hr] = [];
-                }
-
-                // 2. Filtrar e Preencher
                 rawClimateData.forEach(row => {
                     if (!row || !row.data) return;
-                    const p = String(row.data).split('/');
-                    if(p.length < 3) return;
-                    
-                    const rY = p[2].split(' ')[0];
-                    const rM = p[1].padStart(2, '0');
-                    const rD = parseInt(p[0]);
-                    
-                    if (rY === yearStr && rM === monthStr) {
-                        const rowLocal = row.local !== undefined && row.local !== null ? String(row.local).trim() : '';
-                        if (selectedLocals.length > 0 && !selectedLocals.includes('TODOS') && !selectedLocals.includes(rowLocal)) return;
-                        
-                        const hVal = parseInt(row.hora);
-                        if(isNaN(hVal) || hVal < 0 || hVal > 23) return;
+                    const parts = String(row.data).split('/');
+                    if(parts.length < 3) return;
+                    const y = parts[2].split(' ')[0];
+                    const m = parseInt(parts[1]) - 1;
+                    const d = parts[0];
 
-                        let val = null;
-                        if (metrica === 'T' && hasData(row.temperatura)) val = parseFloat(String(row.temperatura).replace(',','.'));
-                        if (metrica === 'U' && hasData(row.umidade)) val = parseFloat(String(row.umidade).replace(',','.'));
+                    if (ano !== 'TODOS' && y !== ano) return;
+                    const rowLoc = row.local ? String(row.local).trim() : '';
+                    if (local !== 'TODOS' && rowLoc !== local) return;
 
-                        if(val !== null && !isNaN(val)) {
-                            matrix[rD].h[hVal].push(val);
-                            matrix[rD].dAll.push(val);
+                    let v = null;
+                    if (metrica === 'T') v = parseFloat(String(row.temperatura).replace(',','.'));
+                    else if (metrica === 'U') v = parseFloat(String(row.umidade).replace(',','.'));
+                    else if (metrica === 'LUZ') v = parseFloat(String(row.luminosidade).replace(',','.'));
+                    else if (metrica === 'CHUVA') v = parseFloat(String(row.chuva).replace(',','.'));
+
+                    if (v !== null && !isNaN(v)) {
+                        monthData[m].push(v);
+                        sum += v; count++;
+                        if(v > max) max = v;
+                        if(v < min) min = v;
+
+                        if (metrica === 'CHUVA') {
+                            const dk = `${y}-${m}-${d}`;
+                            if(!dailyRain[dk]) dailyRain[dk] = 0;
+                            dailyRain[dk] += v;
                         }
                     }
                 });
 
-                // 3. Renderizar HTML
-                let html = '';
-                for(let d=1; d<=daysInMonth; d++) {
-                    html += `<tr class="border-b border-slate-200 hover:bg-slate-50 transition-colors">`;
-                    html += `<td class="p-2 border-r border-slate-200 sticky-col bg-slate-50 font-black text-slate-700 shadow-[2px_0_5px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs z-10">${String(d).padStart(2,'0')}/${monthStr}</td>`;
-                    
-                    for(let hr=0; hr<24; hr++) {
-                        const arr = matrix[d].h[hr];
-                        html += buildTableCell(arr, modo, metrica, false);
-                    }
-                    
-                    // Média Diária (Resumo da Linha)
-                    html += buildTableCell(matrix[d].dAll, modo, metrica, true);
-                    html += `</tr>`;
+                if (metrica === 'CHUVA') {
+                    Object.values(dailyRain).forEach(v => {
+                        if(v > 0) diasComChuva++;
+                        else diasSemChuva++;
+                    });
                 }
 
-                tbody.innerHTML = html;
-            } catch (err) {
-                console.error("Erro ao gerar tabela horária:", err);
-            }
-        }
+                const isSum = metrica === 'CHUVA';
+                const isMax = metrica === 'LUZ';
+                
+                const monthlyAgg = monthData.map(arr => {
+                    if(!arr.length) return null;
+                    if(isSum) return arr.reduce((a,b)=>a+b,0);
+                    if(isMax) return Math.max(...arr);
+                    return arr.reduce((a,b)=>a+b,0)/arr.length;
+                });
 
-        function buildTableCell(arr, modo, metrica, isSummary) {
-            if(!arr || arr.length === 0) {
-                return `<td class="p-1 sm:p-2 border-r border-slate-100 text-slate-300 text-[9px] sm:text-[11px] bg-white">-</td>`;
+                const mainVal = count === 0 ? null : (isSum ? sum : (isMax ? max : sum/count));
+                
+                return {
+                    mainVal, count, max, min, sum, diasComChuva, diasSemChuva,
+                    monthlyAgg, totalDiasRain: Object.keys(dailyRain).length
+                };
+            };
+
+            const p1 = processPanelData(a1, l1);
+            const p2 = processPanelData(a2, l2);
+
+            const globalSum = (p1.sum || 0) + (p2.sum || 0);
+            const globalCount = (p1.count || 0) + (p2.count || 0);
+            
+            let globalVal = 0;
+            if (metrica === 'CHUVA') globalVal = globalSum;
+            else if (metrica === 'LUZ') globalVal = Math.max((p1.max===-Infinity?0:p1.max), (p2.max===-Infinity?0:p2.max));
+            else globalVal = globalCount > 0 ? globalSum / globalCount : 0;
+            
+            const unit = metrica === 'CHUVA' ? 'mm' : (metrica === 'T' ? '°C' : (metrica === 'U' ? '%' : 'kLux'));
+
+            document.getElementById('pnTotalVal').innerText = fmt(globalVal);
+            document.getElementById('pnTotalUnit').innerText = unit;
+
+            let diff1 = '--', diff1Class = 'bg-black/10';
+            if (p1.mainVal !== null && p2.mainVal !== null && p2.mainVal !== 0) {
+                let d = ((p1.mainVal - p2.mainVal) / p2.mainVal) * 100;
+                let isUp = d > 0;
+                diff1 = (isUp ? '↑ ' : '↓ ') + Math.abs(d).toFixed(1) + '%';
+                diff1Class = isUp ? 'bg-white/20 text-white' : 'bg-white/20 text-white';
             }
             
-            const min = Math.min(...arr);
-            const max = Math.max(...arr);
-            const med = arr.reduce((a,b)=>a+b,0) / arr.length;
-            
-            let displayVal = 0;
-            let mainStr = '';
-            let subStr = '';
+            let diff2 = '--', diff2Class = 'bg-black/10';
+            if (p2.mainVal !== null && p1.mainVal !== null && p1.mainVal !== 0) {
+                let d = ((p2.mainVal - p1.mainVal) / p1.mainVal) * 100;
+                let isUp = d > 0;
+                diff2 = (isUp ? '↑ ' : '↓ ') + Math.abs(d).toFixed(1) + '%';
+                diff2Class = isUp ? 'bg-white/20 text-white' : 'bg-white/20 text-white';
+            }
 
-            if(modo === 'MED') { displayVal = med; mainStr = fmt(med); }
-            else if(modo === 'MIN') { displayVal = min; mainStr = fmt(min); }
-            else if(modo === 'MAX') { displayVal = max; mainStr = fmt(max); }
-            else if(modo === 'ALL') { 
-                displayVal = med; 
-                mainStr = fmt(med);
-                if (min !== max) {
-                    subStr = `<div class="text-[8px] text-slate-600 mt-0.5 whitespace-nowrap opacity-90 leading-none">(<span class="text-blue-600">${fmt(min)}</span> ~ <span class="text-red-600">${fmt(max)}</span>)</div>`;
+            const updatePanelUI = (num, a, l, p, diff, diffClass) => {
+                const elTitle = document.getElementById(`pn${num}_title`);
+                const elMain = document.getElementById(`pn${num}_main_val`);
+                const elDiff = document.getElementById(`pn${num}_diff`);
+                
+                const lLabel = l === 'TODOS' ? 'Todos os Locais' : l;
+                elTitle.innerText = `${a} - ${lLabel}`;
+                elMain.innerText = p.mainVal !== null ? fmt(p.mainVal) : '--';
+                elDiff.innerText = diff;
+                elDiff.className = `text-[11px] mt-2 font-bold px-2 py-0.5 rounded inline-block ${diffClass}`;
+
+                const l1 = document.getElementById(`pn${num}_lbl_sec1`);
+                const v1 = document.getElementById(`pn${num}_val_sec1`);
+                const l2 = document.getElementById(`pn${num}_lbl_sec2`);
+                const v2 = document.getElementById(`pn${num}_val_sec2`);
+
+                if (metrica === 'CHUVA') {
+                    l1.innerText = 'Dias Chuvosos'; v1.innerText = p.diasComChuva;
+                    l2.innerText = 'Média Diária'; v2.innerText = p.totalDiasRain > 0 ? fmt(p.sum/p.totalDiasRain) : '--';
+                } else if (metrica === 'T' || metrica === 'U') {
+                    l1.innerText = 'Máxima'; v1.innerText = p.max !== -Infinity ? fmt(p.max) : '--';
+                    l2.innerText = 'Mínima'; v2.innerText = p.min !== Infinity ? fmt(p.min) : '--';
                 } else {
-                    subStr = `<div class="text-[8px] text-slate-400 mt-0.5 whitespace-nowrap opacity-50 leading-none">--</div>`;
+                    l1.innerText = 'Pico Máximo'; v1.innerText = p.max !== -Infinity ? fmt(p.max) : '--';
+                    l2.innerText = 'Leituras'; v2.innerText = p.count;
                 }
-            }
+            };
 
-            const bg = getHeatmapColor(displayVal, metrica);
-            const weight = isSummary ? 'font-black text-slate-900 shadow-inner text-[10px] sm:text-xs' : 'font-bold text-slate-800 text-[10px] sm:text-[11px]';
+            updatePanelUI(1, a1, l1, p1, diff1, diff1Class);
+            updatePanelUI(2, a2, l2, p2, diff2, diff2Class);
+
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
             
-            return `<td class="p-1 sm:p-2 border-r border-slate-200 ${weight}" style="background-color: ${bg}">
-                       <div>${mainStr}</div>
-                       ${subStr}
-                    </td>`;
+            const renderPanelChart = (id, oldInst, data, color, bgColor) => {
+                if(oldInst) oldInst.destroy();
+                const ctx = document.getElementById(id);
+                if(!ctx) return null;
+                return new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            data: data,
+                            borderColor: color,
+                            backgroundColor: bgColor,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.1, 
+                            pointRadius: 3,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: color
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        layout: { padding: { top: 20, right: 20, left: 10, bottom: 5 } },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: c => c.parsed.y !== null ? fmt(c.parsed.y) + ' ' + unit : '' } },
+                            datalabels: { 
+                                display: true, 
+                                color: color, align: 'top', anchor: 'end', font: {weight: 'bold', size: 10},
+                                formatter: v => v !== null ? fmt(v) : ''
+                            }
+                        },
+                        scales: {
+                            y: { display: true, grid: { borderDash: [4, 4] }, grace: '20%' },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            };
+
+            chartPainel1Inst = renderPanelChart('chartPainel1', chartPainel1Inst, p1.monthlyAgg, '#3b82f6', 'rgba(59, 130, 246, 0.15)'); 
+            chartPainel2Inst = renderPanelChart('chartPainel2', chartPainel2Inst, p2.monthlyAgg, '#c026d3', 'rgba(192, 38, 211, 0.15)'); 
         }
 
-        // ========================================================================= //
+        // --- 7. MÓDULO: COMPARATIVO ---
+        function generateComparativo() {
+            if (!rawClimateData || rawClimateData.length === 0) return;
 
+            const metrica = document.getElementById('compMetrica').value;
+            const ano = document.getElementById('compAno').value;
+            const mes = document.getElementById('compMes').value;
+            const periodo = document.getElementById('compPeriodo').value;
+            const agrupamento = document.getElementById('compAgrupamento').value;
+            
+            const local1 = document.getElementById('compLocal1').value;
+            const local2 = document.getElementById('compLocal2').value;
+
+            let filtered = rawClimateData.filter(row => {
+                if (!row || !row.data) return false;
+
+                const parts = String(row.data).split('/');
+                if(parts.length < 3) return false;
+
+                const y = parts[2].split(' ')[0];
+                const m = parts[1].padStart(2, '0');
+                
+                if (ano !== 'TODOS' && y !== ano) return false;
+                if (mes !== 'TODOS' && m !== mes) return false;
+
+                const loc = row.local ? String(row.local).trim() : '';
+                if (loc !== local1 && loc !== local2) return false;
+
+                if (metrica === 'T' && !hasData(row.temperatura)) return false;
+                if (metrica === 'U' && !hasData(row.umidade)) return false;
+                if (metrica === 'LUZ' && !hasData(row.luminosidade)) return false;
+                if (metrica === 'CHUVA' && !hasData(row.chuva)) return false;
+
+                if (periodo !== 'TODOS') {
+                    if (!hasData(row.hora)) return false; 
+                    const h = parseInt(row.hora);
+                    if (periodo === 'MADRUGADA' && !(h >= 0 && h < 6)) return false;
+                    if (periodo === 'MANHA' && !(h >= 6 && h < 12)) return false;
+                    if (periodo === 'TARDE' && !(h >= 12 && h < 18)) return false;
+                    if (periodo === 'NOITE' && !(h >= 18 && h < 24)) return false;
+                }
+                return true;
+            });
+
+            const grouped = {};
+            const timeLabels = {};
+
+            filtered.forEach(row => {
+                const parts = String(row.data).split('/');
+                const y = parts[2].split(' ')[0];
+                const m = parts[1].padStart(2, '0');
+                const d = parts[0].padStart(2, '0');
+                const h = row.hora !== undefined && row.hora !== null && row.hora !== '' ? String(row.hora).padStart(2, '0') : '12';
+                
+                let key, label;
+                if (agrupamento === 'HORA') {
+                    key = `${y}-${m}-${d}-${h}`; label = `${d}/${m} ${h}h`;
+                } else if (agrupamento === 'DIA') {
+                    key = `${y}-${m}-${d}`; label = `${d}/${m}/${y}`;
+                } else if (agrupamento === 'SEMANA') {
+                    const dtObj = new Date(y, parseInt(m)-1, parseInt(d));
+                    const firstDayOfYear = new Date(y, 0, 1);
+                    const pastDaysOfYear = (dtObj - firstDayOfYear) / 86400000;
+                    const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+                    key = `${y}-S${String(weekNum).padStart(2,'0')}`; label = `${y} Sem.${weekNum}`;
+                } else if (agrupamento === 'MES') {
+                    key = `${y}-${m}`; label = `${m}/${y}`;
+                }
+
+                if (!grouped[key]) { grouped[key] = { l1: [], l2: [] }; timeLabels[key] = label; }
+                
+                let val = null;
+                if (metrica === 'T') val = parseFloat(String(row.temperatura).replace(',','.'));
+                else if (metrica === 'U') val = parseFloat(String(row.umidade).replace(',','.'));
+                else if (metrica === 'LUZ') val = parseFloat(String(row.luminosidade).replace(',','.'));
+                else if (metrica === 'CHUVA') val = parseFloat(String(row.chuva).replace(',','.'));
+
+                if (val !== null && !isNaN(val)) {
+                    const loc = row.local ? String(row.local).trim() : '';
+                    if (loc === local1) grouped[key].l1.push(val);
+                    else if (loc === local2) grouped[key].l2.push(val);
+                }
+            });
+
+            const sortedKeys = Object.keys(grouped).sort();
+            const labels = sortedKeys.map(k => timeLabels[k]);
+            
+            const isSum = (metrica === 'CHUVA');
+            const isMax = (metrica === 'LUZ');
+            
+            const aggregate = (arr) => {
+                if(!arr || arr.length === 0) return null;
+                if(isSum) return arr.reduce((a,b)=>a+b, 0);
+                if(isMax) return Math.max(...arr);
+                return arr.reduce((a,b)=>a+b, 0) / arr.length;
+            };
+
+            const dataL1 = sortedKeys.map(k => aggregate(grouped[k].l1));
+            const dataL2 = sortedKeys.map(k => aggregate(grouped[k].l2));
+
+            let sum1=0, count1=0, sum2=0, count2=0;
+            dataL1.forEach(v => { if(v !== null){ sum1+=v; count1++; } });
+            dataL2.forEach(v => { if(v !== null){ sum2+=v; count2++; } });
+
+            const m1 = count1 > 0 ? (isSum ? sum1 : sum1/count1) : 0;
+            const m2 = count2 > 0 ? (isSum ? sum2 : sum2/count2) : 0;
+
+            const resEl = document.getElementById('compResumoDiferenca');
+            let diffTxt = '';
+            if (count1 > 0 && count2 > 0 && local1 !== local2) {
+                let unit = metrica === 'T' ? '°C' : (metrica === 'U' ? '%' : (metrica === 'CHUVA' ? 'mm' : 'kLux'));
+                let diff = m1 - m2;
+                if (diff > 0) {
+                    diffTxt = `<b class="text-blue-600">${local1}</b> está registrando <b class="text-slate-800">+${fmt(Math.abs(diff), 1)} ${unit}</b> acima.`;
+                } else if (diff < 0) {
+                    diffTxt = `<b class="text-orange-600">${local2}</b> está registrando <b class="text-slate-800">+${fmt(Math.abs(diff), 1)} ${unit}</b> acima.`;
+                } else {
+                    diffTxt = "A média dos dois locais está rigorosamente igual no período.";
+                }
+            } else if (local1 === local2) {
+                diffTxt = "Você está comparando o mesmo local.";
+            } else {
+                diffTxt = "Dados insuficientes para cruzar neste período.";
+            }
+            if (resEl) resEl.innerHTML = diffTxt;
+
+            if(chartCompareInst) chartCompareInst.destroy();
+            const ctx = document.getElementById('chartComparativo');
+            if(!ctx) return;
+            
+            let titleY = metrica === 'CHUVA' ? 'mm' : (metrica === 'T' ? '°C' : (metrica === 'U' ? '%' : 'kLux'));
+            let chartType = metrica === 'CHUVA' || metrica === 'LUZ' ? 'bar' : 'line';
+
+            chartCompareInst = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: local1 + ' (Base)',
+                            data: dataL1,
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)', 
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 2
+                        },
+                        {
+                            label: local2 + ' (Comparado)',
+                            data: dataL2,
+                            backgroundColor: 'rgba(249, 115, 22, 0.2)', 
+                            borderColor: '#f97316',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: {weight:'bold'} } },
+                        datalabels: { 
+                            display: showDataLabels,
+                            align: 'top', anchor: 'end', font: {weight: 'bold', size: 9},
+                            formatter: v => {
+                                if (v===null || v===undefined) return '';
+                                return v.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { title: {display: true, text: titleY, font: {weight:'bold'}}, grace: '10%' },
+                        x: { ticks: { maxRotation: 45, minRotation: 45 } }
+                    }
+                }
+            });
+        }
+
+        // --- 8. MÓDULO: ANÁLISE DETALHADA ---
+        function generateDetailedAnalysis() {
+            if (!rawClimateData || rawClimateData.length === 0) return;
+
+            const metrica = document.getElementById('detMetrica').value;
+            const anoBase = document.getElementById('detAno').value;
+            const selectedLocals = getSelectedLocals();
+            const aparelho = document.getElementById('dashAparelho').value;
+
+            const dInicio = document.getElementById('dashDataInicio').value;
+            const dFim = document.getElementById('dashDataFim').value;
+
+            let isSum = (metrica === 'CHUVA');
+            let isMax = (metrica === 'LUZ');
+
+            let filtered = rawClimateData.filter(row => {
+                if (!row || !row.data) return false;
+
+                const parts = String(row.data).split('/');
+                if(parts.length < 3) return false;
+
+                const yearStr = parts[2].split(' ')[0];
+                const d = new Date(yearStr, parts[1]-1, parts[0]);
+                
+                if (dInicio && d < new Date(dInicio)) return false;
+                if (dFim && d > new Date(dFim)) return false;
+                
+                const rowLocal = row.local !== undefined && row.local !== null ? String(row.local).trim() : '';
+                if (selectedLocals.length > 0 && !selectedLocals.includes('TODOS') && !selectedLocals.includes(rowLocal)) return false;
+                
+                const aparelhoLimpo = row.aparelho !== undefined && row.aparelho !== null ? String(row.aparelho).trim() : '';
+                if (aparelho !== 'TODOS' && aparelhoLimpo !== aparelho) return false;
+                
+                if (metrica === 'T' && !hasData(row.temperatura)) return false;
+                if (metrica === 'U' && !hasData(row.umidade)) return false;
+                if (metrica === 'LUZ' && !hasData(row.luminosidade)) return false;
+                if (metrica === 'CHUVA' && !hasData(row.chuva)) return false;
+                
+                return true;
+            });
+
+            const dataByYear = {}; 
+            const dataByEvolMes = {}; 
+            const dataBySemana = {}; 
+            const dataPizzaMes = {}; 
+
+            filtered.forEach(row => {
+                const parts = String(row.data).split('/');
+                if(parts.length < 3) return;
+                const y = parts[2].split(' ')[0];
+                const m = parts[1].padStart(2, '0');
+                const d = parts[0].padStart(2, '0');
+                
+                let val = null;
+                if (metrica === 'T') val = parseFloat(String(row.temperatura).replace(',','.'));
+                else if (metrica === 'U') val = parseFloat(String(row.umidade).replace(',','.'));
+                else if (metrica === 'LUZ') val = parseFloat(String(row.luminosidade).replace(',','.'));
+                else if (metrica === 'CHUVA') val = parseFloat(String(row.chuva).replace(',','.'));
+
+                if (val !== null && !isNaN(val)) {
+                    if(!dataByYear[y]) dataByYear[y] = [];
+                    dataByYear[y].push(val);
+
+                    const ym = `${y}-${m}`;
+                    if(!dataByEvolMes[ym]) dataByEvolMes[ym] = [];
+                    dataByEvolMes[ym].push(val);
+
+                    const dtObj = new Date(y, parseInt(m)-1, parseInt(d));
+                    const firstDayOfYear = new Date(y, 0, 1);
+                    const pastDaysOfYear = (dtObj - firstDayOfYear) / 86400000;
+                    const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+                    const yw = `${y}-S${String(weekNum).padStart(2,'0')}`;
+                    if(!dataBySemana[yw]) dataBySemana[yw] = [];
+                    dataBySemana[yw].push(val);
+
+                    if (anoBase === 'TODOS' || anoBase === y) {
+                        if(!dataPizzaMes[m]) dataPizzaMes[m] = [];
+                        dataPizzaMes[m].push(val);
+                    }
+                }
+            });
+
+            const aggregate = (arr) => {
+                if(!arr || arr.length === 0) return 0;
+                if(isSum) return arr.reduce((a,b)=>a+b, 0);
+                if(isMax) return Math.max(...arr);
+                return arr.reduce((a,b)=>a+b, 0) / arr.length;
+            };
+
+            const lblsYear = Object.keys(dataByYear).sort();
+            const valsYear = lblsYear.map(k => aggregate(dataByYear[k]));
+
+            const lblsEvolMes = Object.keys(dataByEvolMes).sort();
+            const valsEvolMes = lblsEvolMes.map(k => aggregate(dataByEvolMes[k]));
+
+            const lblsWeek = Object.keys(dataBySemana).sort();
+            const valsWeek = lblsWeek.map(k => aggregate(dataBySemana[k]));
+
+            const monthNames = { '01':'Jan', '02':'Fev', '03':'Mar', '04':'Abr', '05':'Mai', '06':'Jun', '07':'Jul', '08':'Ago', '09':'Set', '10':'Out', '11':'Nov', '12':'Dez' };
+            const lblsPizza = Object.keys(dataPizzaMes).sort();
+            const valsPizza = lblsPizza.map(k => aggregate(dataPizzaMes[k]));
+            const labelsPizzaNames = lblsPizza.map(k => monthNames[k]);
+
+            const getColors = (met) => {
+                if(met === 'CHUVA') return { bg: 'rgba(14, 165, 233, 0.6)', border: '#0284c7' };
+                if(met === 'T') return { bg: 'rgba(239, 68, 68, 0.6)', border: '#dc2626' };
+                if(met === 'U') return { bg: 'rgba(59, 130, 246, 0.6)', border: '#2563eb' };
+                return { bg: 'rgba(245, 158, 11, 0.6)', border: '#d97706' };
+            };
+            
+            const pizzaColors = ['#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#06b6d4'];
+
+            const cInfo = getColors(metrica);
+            let titleY = metrica === 'CHUVA' ? 'mm' : (metrica === 'T' ? '°C' : (metrica === 'U' ? '%' : 'kLux'));
+            let labelNm = isSum ? 'Total' : (isMax ? 'Máximo' : 'Média');
+
+            const createBarChart = (ctxId, oldInst, labels, dataArr) => {
+                if(oldInst) oldInst.destroy();
+                const ctx = document.getElementById(ctxId);
+                if(!ctx) return null;
+                return new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ label: `${labelNm} (${titleY})`, data: dataArr, backgroundColor: cInfo.bg, borderColor: cInfo.border, borderWidth: 1, borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: showDataLabels, color: cInfo.border, align: 'top', anchor: 'end', font: {weight: 'bold'}, formatter: v => v.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1}) } }, scales: { y: { title: {display: true, text: titleY, font: {weight:'bold'}}, grace: '10%' } } }
+                });
+            };
+
+            const createLineChart = (ctxId, oldInst, labels, dataArr) => {
+                if(oldInst) oldInst.destroy();
+                const ctx = document.getElementById(ctxId);
+                if(!ctx) return null;
+                return new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ label: `${labelNm} (${titleY})`, data: dataArr, backgroundColor: cInfo.bg.replace('0.6', '0.1'), borderColor: cInfo.border, borderWidth: 2, fill: true, tension: 0.3, pointRadius: 2, pointHoverRadius: 5 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: showDataLabels, color: cInfo.border, align: 'top', anchor: 'end', font: {weight: 'bold', size: 9}, formatter: v => v.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1}) } }, scales: { y: { title: {display: true, text: titleY, font: {weight:'bold'}}, grace: '10%' }, x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
+                });
+            };
+
+            const createPieChart = (ctxId, oldInst, labels, dataArr) => {
+                if(oldInst) oldInst.destroy();
+                const ctx = document.getElementById(ctxId);
+                if(!ctx) return null;
+                return new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels: labels, datasets: [{ data: dataArr, backgroundColor: pizzaColors.slice(0, dataArr.length), borderWidth: 1 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: {weight:'bold'} } }, datalabels: { display: true, color: '#fff', font: {weight: 'bold', size: 10}, textStrokeColor: 'rgba(0,0,0,0.5)', textStrokeWidth: 2, formatter: (v, context) => { if(v === 0) return ''; let total = context.chart.data.datasets[0].data.reduce((a,b)=>a+b,0); return (v/total*100).toFixed(1) + '%'; } } } }
+                });
+            };
+
+            chartDetAnoInst = createBarChart('chartDetAno', chartDetAnoInst, lblsYear, valsYear);
+            chartDetMesInst = createLineChart('chartDetMesEvolucao', chartDetMesInst, lblsEvolMes, valsEvolMes);
+            chartDetSemInst = createLineChart('chartDetSemana', chartDetSemInst, lblsWeek, valsWeek);
+            chartDetPizzaInst = createPieChart('chartDetPizza', chartDetPizzaInst, labelsPizzaNames, valsPizza);
+        }
+
+        // --- 9. MÓDULO: DASHBOARD PRINCIPAL (FILTRO, INSIGHTS, GRAFICOS) ---
         function filterDashboard() {
             try {
                 if (!rawClimateData || rawClimateData.length === 0) {
@@ -1230,7 +1988,7 @@
                 let sumL=0, maxL=-Infinity, countL=0;
                 let sumC=0; 
                 
-                const rainByDay = {}; // Tracker de chuva diária
+                const rainByDay = {}; 
 
                 filtered.forEach(row => {
                     const parts = String(row.data).split('/');
@@ -1273,7 +2031,6 @@
                     }
                 });
 
-                // Lógica Específica para a Chuva (Pico Diário e Dias)
                 let maxC = -Infinity;
                 let diasChuva = 0;
                 let diasSemChuva = 0;
@@ -1286,7 +2043,6 @@
                 });
 
                 const chuvaMedia = totalDias > 0 ? sumC / totalDias : 0;
-
                 const setTxtSafe = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
 
                 setTxtSafe('kpiTempMedia', countT > 0 ? fmt(sumT/countT) : '--');
@@ -1398,22 +2154,9 @@
                             responsive: true, maintainAspectRatio: false,
                             plugins: { 
                                 legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'line' } },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.dataset.label || '';
-                                            if (label) label += ': ';
-                                            if (context.parsed.y !== null) {
-                                                label += context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                                            }
-                                            return label;
-                                        }
-                                    }
-                                },
+                                tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.parsed.y !== null) { label += context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1}); } return label; } } },
                                 datalabels: { 
-                                    display: showDataLabels,
-                                    clip: false,
-                                    font: { weight: 'bold', size: 10 },
+                                    display: showDataLabels, clip: false, font: { weight: 'bold', size: 10 },
                                     formatter: (v, ctx) => {
                                         if(!v) return '';
                                         let dec = ctx.dataset.label.includes('VPD') ? 2 : 1;
@@ -1467,7 +2210,7 @@
         }
 
         function generateInsights(mt, minT, mu, minU, v, ml, sc, metrica, selectedLocals) {
-            const fmt = (val, dec=1) => typeof val === 'number' ? val.toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec}) : val;
+            const fmtLoc = (val, dec=1) => typeof val === 'number' ? val.toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec}) : val;
             let alerts = [];
             
             let culturas = new Set();
@@ -1485,7 +2228,6 @@
                 alerts.push(`<div class="w-full text-[10px] text-brand-500 font-bold mb-2 uppercase tracking-widest pb-1 border-b border-slate-500/20"><i data-lucide="sprout" class="inline w-3 h-3 mb-0.5"></i> Parâmetros Otimizados para: ${culturaContext}</div>`);
             }
 
-            // Função para renderizar cada alerta com a Ação Recomendada abaixo
             const addAlert = (icon, title, desc, rec) => {
                 alerts.push(`
                     <div class="mb-2 pb-2 border-b border-slate-200/60 last:border-0 last:mb-0 last:pb-0">
@@ -1503,40 +2245,35 @@
 
             if (metrica === 'TODAS' || metrica === 'TERMO') {
                 if (culturas.has('Brócolis')) {
-                    if(mt >= 28) addAlert('🔥', 'Alerta Brócolis (Calor Extremo)', `Pico de ${fmt(mt)}°C. Alto risco de "buttoning" (fechamento precoce da cabeça) e má formação vascular.`, 'Aumentar a frequência de irrigação com pulsos curtos. Avaliar uso de telas termorrefletoras nos horários de pico e reforçar aplicação foliar de Cálcio e Boro.');
-                    if(mu > 90) addAlert('💧', 'Alerta Brócolis (Fungos)', `Umidade excessiva (${fmt(mu)}%). Atenção máxima para Podridão Negra (Alternaria) e Míldio.`, 'Melhorar a ventilação abrindo o manejo lateral e zenital precocemente. Aplicar defensivos preventivos e evitar regas no final da tarde.');
+                    if(mt >= 28) addAlert('🔥', 'Alerta Brócolis (Calor Extremo)', `Pico de ${fmtLoc(mt)}°C. Alto risco de "buttoning" e má formação vascular.`, 'Aumentar a frequência de irrigação com pulsos curtos. Avaliar uso de telas termorrefletoras.');
+                    if(mu > 90) addAlert('💧', 'Alerta Brócolis (Fungos)', `Umidade excessiva (${fmtLoc(mu)}%). Atenção máxima para Podridão Negra.`, 'Melhorar a ventilação abrindo manejo lateral e zenital. Evitar regas à tarde.');
                 }
-                
                 if (culturas.has('Pepino')) {
-                    if(mt >= 35) addAlert('🔥', 'Alerta Pepino (Calor Extremo)', `Picos de ${fmt(mt)}°C afetam severamente a viabilidade do pólen e causam abortamento de frutos.`, 'Acionar sistema de nebulização (fog) ou aspersão invertida se disponível. Garantir que o bulbo úmido no substrato/solo não seque.');
-                    if(minT < 15 && minT !== Infinity) addAlert('❄️', 'Alerta Pepino (Frio)', `Mínima de ${fmt(minT)}°C causa travamento do metabolismo e paralisa o crescimento vegetativo.`, 'Fechar as cortinas laterais mais cedo para reter a radiação térmica. Retardar e diminuir a lâmina da primeira irrigação da manhã.');
-                    if(mu > 88) addAlert('💧', 'Alerta Pepino (Fungos)', `Umidade máxima atingiu ${fmt(mu)}%. Condição ideal para infestação severa de Oídio e Míldio.`, 'Ativar ventilação forçada (exaustores) ou manejo contínuo de cortinas. Realizar desfolha das saias para melhorar o microclima na base da planta.');
+                    if(mt >= 35) addAlert('🔥', 'Alerta Pepino (Calor Extremo)', `Picos de ${fmtLoc(mt)}°C afetam o pólen e causam abortamento.`, 'Acionar nebulização ou aspersão invertida. Garantir substrato úmido.');
+                    if(minT < 15 && minT !== Infinity) addAlert('❄️', 'Alerta Pepino (Frio)', `Mínima de ${fmtLoc(minT)}°C causa travamento do metabolismo.`, 'Fechar cortinas mais cedo para reter radiação térmica.');
+                    if(mu > 88) addAlert('💧', 'Alerta Pepino (Fungos)', `Umidade máxima atingiu ${fmtLoc(mu)}%. Condição para infestação de Oídio.`, 'Ativar exaustores ou manejo contínuo de cortinas. Realizar desfolha das saias.');
                 }
-                
                 if (culturas.has('Fábrica de Ácaros')) {
-                    if(mu < 65 && mu !== Infinity) addAlert('🏜️', 'Alerta Ácaros (Seca letal)', `Umidade caiu para ${fmt(mu)}%. O ar muito seco impede a eclosão dos ovos e eleva a mortalidade da criação.`, 'Acionar umidificadores de ambiente imediatamente. Manter recipientes com água ou piso úmido nas instalações de criação.');
-                    if(mt > 32) addAlert('🔥', 'Alerta Ácaros (Calor)', `Temperaturas acima de 32°C (${fmt(mt)}°C) induzem os ácaros à diapausa (inatividade prolongada).`, 'Verificar isolamento térmico e reforçar a ventilação. Reduzir a densidade populacional por recipiente para evitar aquecimento interno.');
+                    if(mu < 65 && mu !== Infinity) addAlert('🏜️', 'Alerta Ácaros (Seca letal)', `Umidade caiu para ${fmtLoc(mu)}%. Impede eclosão e eleva mortalidade.`, 'Acionar umidificadores e manter piso úmido nas instalações.');
+                    if(mt > 32) addAlert('🔥', 'Alerta Ácaros (Calor)', `Temperaturas (${fmtLoc(mt)}°C) induzem os ácaros à diapausa.`, 'Reforçar ventilação e reduzir densidade populacional por recipiente.');
                 }
-
                 if (culturas.size === 0) {
-                    if(mt >= 35) addAlert('🔥', 'Estresse Térmico Severo', `Picos de ${fmt(mt)}°C registrados. Alto risco de abortamento floral e travamento geral.`, 'Reforçar o balanço hídrico diário. Aumentar a ventilação e avaliar o uso temporário de telas de sombreamento (30%).');
-                    if(mu > 88) addAlert('💧', 'Alerta Fúngico', `Umidade máxima atingiu ${fmt(mu)}%. Ambiente propício para a instalação de doenças foliares.`, 'Promover a máxima circulação de ar. Evitar irrigações pesadas em horários de baixa luminosidade para evitar o molhamento foliar noturno.');
+                    if(mt >= 35) addAlert('🔥', 'Estresse Térmico Severo', `Picos de ${fmtLoc(mt)}°C. Alto risco de abortamento floral.`, 'Aumentar ventilação e avaliar uso temporário de sombreamento.');
+                    if(mu > 88) addAlert('💧', 'Alerta Fúngico', `Umidade máxima de ${fmtLoc(mu)}%. Propício para doenças foliares.`, 'Evitar irrigações pesadas em horários de baixa luminosidade.');
                 }
-
                 if (v !== '--') {
-                    if(v > 1.4) addAlert('🍂', 'VPD Elevado (Seca Atmosférica)', `(${fmt(v, 2)} kPa) O ar está muito seco, forçando fechamento estomático severo.`, 'A planta paralisou a fotossíntese para não desidratar. Umidificar o ambiente (nebulização) ou aumentar a irrigação para repor a água transpirada.');
-                    else if(v >= 0.8 && v <= 1.2 && !culturas.has('Fábrica de Ácaros')) addAlert('🌱', 'Transpiração Perfeita', `O Déficit de Pressão de Vapor (VPD) está na zona ideal.`, 'As plantas estão a transpirar e a absorver nutrientes em taxa máxima. Mantenha o manejo nutricional otimizado, com foco na absorção de Cálcio.');
-                    else if(v < 0.4 && !culturas.has('Fábrica de Ácaros')) addAlert('💧', 'VPD Muito Baixo (Ar Saturado)', `(${fmt(v, 2)} kPa) O ambiente está saturado de umidade e a planta não consegue transpirar.`, 'Sem transpiração, não há absorção de água nem de nutrientes pelo sistema radicular (alto risco de deficiência de Cálcio e Tipburn). Aquecer ou ventilar urgentemente o ambiente.');
+                    if(v > 1.4) addAlert('🍂', 'VPD Elevado (Seca Atmosférica)', `(${fmtLoc(v, 2)} kPa) Ar muito seco, forçando fechamento estomático.`, 'A planta paralisou fotossíntese. Umidificar ambiente ou aumentar irrigação.');
+                    else if(v >= 0.8 && v <= 1.2 && !culturas.has('Fábrica de Ácaros')) addAlert('🌱', 'Transpiração Perfeita', `O VPD está na zona ideal.`, 'Plantas a transpirar em taxa máxima. Mantenha manejo nutricional otimizado.');
+                    else if(v < 0.4 && !culturas.has('Fábrica de Ácaros')) addAlert('💧', 'VPD Muito Baixo (Ar Saturado)', `(${fmtLoc(v, 2)} kPa) Ar saturado. Planta não consegue transpirar.`, 'Sem transpiração não há absorção (risco de Tipburn). Aquecer/ventilar urgente.');
                 }
             }
             
             if (metrica === 'TODAS' || metrica === 'LUZ') {
-                if(ml > 80) addAlert('☀️', 'Alerta de Radiação Externa', `Pico de luminosidade extremo (${fmt(ml)} kLux).`, 'Risco de escaldadura de frutos e estresse foto-oxidativo nas folhas. Realizar o fechamento de telas termorrefletoras nos horários críticos (10h às 14h).');
+                if(ml > 80) addAlert('☀️', 'Alerta de Radiação Externa', `Pico extremo (${fmtLoc(ml)} kLux).`, 'Risco de escaldadura. Fechar telas termorrefletoras nos horários críticos.');
             }
-            
             if (metrica === 'TODAS' || metrica === 'CHUVA') {
-                if(sc > 100) addAlert('🌧️', 'Excesso Hídrico Pluviométrico', `Acumulado severo de ${fmt(sc)} mm no período.`, 'Inspecionar rapidamente as calhas, drenos e o escoamento ao redor das estufas. Em campo aberto, focar na oxigenação do sistema radicular e no monitoramento de doenças de solo (Pythium).');
-                else if (sc === 0) addAlert('🏜️', 'Estiagem Absoluta', `Nenhuma gota de chuva registrada no período analisado.`, 'A demanda hídrica recai 100% sobre a irrigação artificial. Aumentar o monitoramento da Condutividade Elétrica (EC) no substrato/solo para evitar a rápida salinização por acúmulo de adubos.');
+                if(sc > 100) addAlert('🌧️', 'Excesso Hídrico', `Acumulado severo de ${fmtLoc(sc)} mm no período.`, 'Inspecionar calhas e drenos. Em campo, focar em doenças de solo (Pythium).');
+                else if (sc === 0) addAlert('🏜️', 'Estiagem Absoluta', `Nenhuma gota de chuva registrada no período.`, 'Monitorar a EC no substrato/solo para evitar salinização por acúmulo de adubos.');
             }
 
             const card = document.getElementById('dashInsightCard');
@@ -1614,17 +2351,17 @@
                 }
             };
 
-            const fmt = (v, dec=1) => v.toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec});
+            const fmtL = (v, dec=1) => v.toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec});
 
-            if (gMaxT.v !== -Infinity) updResumo('tempResumo', `<span>🔥 Pico de Calor: <b class="text-red-600">${gMaxT.l}</b> (${fmt(gMaxT.v)}°C)</span><span>❄️ Mais Frio: <b class="text-blue-600">${gMinT.l}</b> (${fmt(gMinT.v)}°C)</span>`); else updResumo('tempResumo', '');
-            if (gMaxU.v !== -Infinity) updResumo('umidResumo', `<span>💧 Mais Úmido: <b class="text-sky-600">${gMaxU.l}</b> (${fmt(gMaxU.v)}%)</span><span>🏜️ Mais Seco: <b class="text-amber-600">${gMinU.l}</b> (${fmt(gMinU.v)}%)</span>`); else updResumo('umidResumo', '');
-            if (gMaxL.v !== -Infinity) updResumo('luzResumo', `<span>☀️ Maior Radiação: <b class="text-amber-500">${gMaxL.l}</b> (${fmt(gMaxL.v)} kLux)</span>`); else updResumo('luzResumo', '');
-            if (gMaxV.v !== -Infinity) updResumo('vpdResumo', `<span>🍂 Maior Déficit: <b class="text-red-500">${gMaxV.l}</b> (${fmt(gMaxV.v, 2)} kPa)</span><span>🌱 Menor Déficit: <b class="text-emerald-500">${gMinV.l}</b> (${fmt(gMinV.v, 2)} kPa)</span>`); else updResumo('vpdResumo', '');
+            if (gMaxT.v !== -Infinity) updResumo('tempResumo', `<span>🔥 Pico de Calor: <b class="text-red-600">${gMaxT.l}</b> (${fmtL(gMaxT.v)}°C)</span><span>❄️ Mais Frio: <b class="text-blue-600">${gMinT.l}</b> (${fmtL(gMinT.v)}°C)</span>`); else updResumo('tempResumo', '');
+            if (gMaxU.v !== -Infinity) updResumo('umidResumo', `<span>💧 Mais Úmido: <b class="text-sky-600">${gMaxU.l}</b> (${fmtL(gMaxU.v)}%)</span><span>🏜️ Mais Seco: <b class="text-amber-600">${gMinU.l}</b> (${fmtL(gMinU.v)}%)</span>`); else updResumo('umidResumo', '');
+            if (gMaxL.v !== -Infinity) updResumo('luzResumo', `<span>☀️ Maior Radiação: <b class="text-amber-500">${gMaxL.l}</b> (${fmtL(gMaxL.v)} kLux)</span>`); else updResumo('luzResumo', '');
+            if (gMaxV.v !== -Infinity) updResumo('vpdResumo', `<span>🍂 Maior Déficit: <b class="text-red-500">${gMaxV.l}</b> (${fmtL(gMaxV.v, 2)} kPa)</span><span>🌱 Menor Déficit: <b class="text-emerald-500">${gMinV.l}</b> (${fmtL(gMinV.v, 2)} kPa)</span>`); else updResumo('vpdResumo', '');
             
             if (gMaxC.v !== -Infinity && gMaxC.v > 0) {
-                let rainTxt = `<span>🌧️ Maior Volume: <b class="text-blue-500">${gMaxC.l}</b> (${fmt(gMaxC.v)} mm)</span>`;
+                let rainTxt = `<span>🌧️ Maior Volume: <b class="text-blue-500">${gMaxC.l}</b> (${fmtL(gMaxC.v)} mm)</span>`;
                 if (rainStats) {
-                    rainTxt += `<span>📊 Média: <b class="text-sky-600">${fmt(rainStats.media)} mm/d</b></span>`;
+                    rainTxt += `<span>📊 Média: <b class="text-sky-600">${fmtL(rainStats.media)} mm/d</b></span>`;
                     rainTxt += `<span>☔ Com Chuva: <b class="text-blue-500">${rainStats.diasChuva} d</b></span>`;
                     rainTxt += `<span>☀️ Sem Chuva: <b class="text-orange-400">${rainStats.diasSecos} d</b></span>`;
                 }
@@ -1683,43 +2420,23 @@
                     let scales = { x: { grid: { display: false } } };
                     if (yTitle) {
                         scales.y = { 
-                            type: 'linear', 
-                            display: true, 
+                            type: 'linear', display: true, 
                             title: { display: true, text: yTitle, font: {weight:'bold'} }, 
-                            grid: { borderDash: [4, 4] }, 
-                            grace: '20%',
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString('pt-BR');
-                                }
-                            }
+                            grid: { borderDash: [4, 4] }, grace: '20%',
+                            ticks: { callback: function(value) { return value.toLocaleString('pt-BR'); } }
                         };
                     }
                     return new Chart(canvasEl, { 
-                        type, 
-                        data: {labels, datasets: data}, 
+                        type, data: {labels, datasets: data}, 
                         options: { 
                             layout: { padding: { top: 25, bottom: 25, left: 10, right: 10 } },
-                            responsive: true, 
-                            maintainAspectRatio: false, 
+                            responsive: true, maintainAspectRatio: false, 
                             plugins: { 
                                 legend: { labels: { usePointStyle: true, pointStyle: 'line', font: { weight: 'bold' } } },
-                                tooltip: { callbacks: { label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    if (context.parsed.y !== null) {
-                                        let dec = context.dataset.label.includes('VPD') ? 2 : 1;
-                                        label += context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec});
-                                    }
-                                    return label;
-                                }}},
+                                tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.parsed.y !== null) { let dec = context.dataset.label.includes('VPD') ? 2 : 1; label += context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec}); } return label; }}},
                                 datalabels: { 
                                     display: showDataLabels, clip: false, font: { weight: 'bold', size: 10 },
-                                    formatter: (v, ctx) => {
-                                        if(!v) return '';
-                                        let dec = ctx.dataset.label.includes('VPD') ? 2 : 1;
-                                        return Number(v).toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec});
-                                    }
+                                    formatter: (v, ctx) => { if(!v) return ''; let dec = ctx.dataset.label.includes('VPD') ? 2 : 1; return Number(v).toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec}); }
                                 } 
                             }, 
                             scales 
@@ -1736,6 +2453,151 @@
             chartChuvaInst = cfg('chartChuva', chartChuvaInst, datasetsChuva, 'bar', 'mm');
         }
 
+        // --- MÓDULO: TABELA DE DADOS HORÁRIOS ---
+        function buildTableHeader() {
+            let tr = `<th class="p-2 border border-slate-700 bg-slate-900 sticky-col min-w-[50px] uppercase font-black text-[10px] tracking-widest z-30">Dia</th>`;
+            for(let i=0; i<24; i++) {
+                tr += `<th class="p-2 border border-slate-700 min-w-[50px] font-black">${String(i).padStart(2,'0')}h</th>`;
+            }
+            tr += `<th class="p-2 border border-slate-700 bg-slate-900 font-black min-w-[70px] uppercase text-[10px] tracking-widest">Resumo<br>Diário</th>`;
+            const thead = document.getElementById('thead-tabela');
+            if(thead) thead.innerHTML = tr;
+        }
+
+        function getHeatmapColor(v, metrica) {
+            if(v === null || isNaN(v)) return 'transparent';
+            if(metrica === 'T') {
+                if(v < 15) return '#dbeafe'; 
+                if(v < 20) return '#dcfce7'; 
+                if(v < 25) return '#fef9c3'; 
+                if(v < 30) return '#fef08a'; 
+                if(v < 35) return '#fed7aa'; 
+                return '#fca5a5';            
+            } else { 
+                if(v < 50) return '#fed7aa'; 
+                if(v < 70) return '#fef08a'; 
+                if(v < 85) return '#dcfce7'; 
+                return '#dbeafe';            
+            }
+        }
+
+        function generateTable() {
+            try {
+                const metricaEl = document.getElementById('tabTableMetrica');
+                const modoEl = document.getElementById('tabTableModo');
+                const monthValEl = document.getElementById('tabMonth');
+                
+                if (!metricaEl || !modoEl || !monthValEl) return;
+                
+                const metrica = metricaEl.value;
+                const modo = modoEl.value;
+                const monthVal = monthValEl.value; 
+                const selectedLocals = getSelectedLocals();
+
+                const tbody = document.getElementById('tbody-tabela');
+                if(!tbody) return;
+
+                if(!monthVal) {
+                    tbody.innerHTML = `<tr><td colspan="26" class="p-8 text-center text-slate-400 font-bold">Selecione um mês.</td></tr>`;
+                    return;
+                }
+                if(rawClimateData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="26" class="p-8 text-center text-slate-400 font-bold">Sem dados sincronizados.</td></tr>`;
+                    return;
+                }
+
+                const [yearStr, monthStr] = monthVal.split('-');
+                const daysInMonth = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
+
+                let matrix = {};
+                for(let d=1; d<=daysInMonth; d++) {
+                    matrix[d] = { h: {}, dAll: [] };
+                    for(let hr=0; hr<24; hr++) matrix[d].h[hr] = [];
+                }
+
+                rawClimateData.forEach(row => {
+                    if (!row || !row.data) return;
+                    const p = String(row.data).split('/');
+                    if(p.length < 3) return;
+                    
+                    const rY = p[2].split(' ')[0];
+                    const rM = p[1].padStart(2, '0');
+                    const rD = parseInt(p[0]);
+                    
+                    if (rY === yearStr && rM === monthStr) {
+                        const rowLocal = row.local !== undefined && row.local !== null ? String(row.local).trim() : '';
+                        if (selectedLocals.length > 0 && !selectedLocals.includes('TODOS') && !selectedLocals.includes(rowLocal)) return;
+                        
+                        const hVal = parseInt(row.hora);
+                        if(isNaN(hVal) || hVal < 0 || hVal > 23) return;
+
+                        let val = null;
+                        if (metrica === 'T' && hasData(row.temperatura)) val = parseFloat(String(row.temperatura).replace(',','.'));
+                        if (metrica === 'U' && hasData(row.umidade)) val = parseFloat(String(row.umidade).replace(',','.'));
+
+                        if(val !== null && !isNaN(val)) {
+                            matrix[rD].h[hVal].push(val);
+                            matrix[rD].dAll.push(val);
+                        }
+                    }
+                });
+
+                let html = '';
+                for(let d=1; d<=daysInMonth; d++) {
+                    html += `<tr class="border-b border-slate-200 hover:bg-slate-50 transition-colors">`;
+                    html += `<td class="p-2 border-r border-slate-200 sticky-col bg-slate-50 font-black text-slate-700 shadow-[2px_0_5px_rgba(0,0,0,0.05)] text-[10px] sm:text-xs z-10">${String(d).padStart(2,'0')}/${monthStr}</td>`;
+                    
+                    for(let hr=0; hr<24; hr++) {
+                        const arr = matrix[d].h[hr];
+                        html += buildTableCell(arr, modo, metrica, false);
+                    }
+                    
+                    html += buildTableCell(matrix[d].dAll, modo, metrica, true);
+                    html += `</tr>`;
+                }
+
+                tbody.innerHTML = html;
+            } catch (err) {
+                console.error("Erro ao gerar tabela horária:", err);
+            }
+        }
+
+        function buildTableCell(arr, modo, metrica, isSummary) {
+            if(!arr || arr.length === 0) {
+                return `<td class="p-1 sm:p-2 border-r border-slate-100 text-slate-300 text-[9px] sm:text-[11px] bg-white">-</td>`;
+            }
+            
+            const min = Math.min(...arr);
+            const max = Math.max(...arr);
+            const med = arr.reduce((a,b)=>a+b,0) / arr.length;
+            
+            let displayVal = 0;
+            let mainStr = '';
+            let subStr = '';
+
+            if(modo === 'MED') { displayVal = med; mainStr = fmt(med); }
+            else if(modo === 'MIN') { displayVal = min; mainStr = fmt(min); }
+            else if(modo === 'MAX') { displayVal = max; mainStr = fmt(max); }
+            else if(modo === 'ALL') { 
+                displayVal = med; 
+                mainStr = fmt(med);
+                if (min !== max) {
+                    subStr = `<div class="text-[8px] text-slate-600 mt-0.5 whitespace-nowrap opacity-90 leading-none">(<span class="text-blue-600">${fmt(min)}</span> ~ <span class="text-red-600">${fmt(max)}</span>)</div>`;
+                } else {
+                    subStr = `<div class="text-[8px] text-slate-400 mt-0.5 whitespace-nowrap opacity-50 leading-none">--</div>`;
+                }
+            }
+
+            const bg = getHeatmapColor(displayVal, metrica);
+            const weight = isSummary ? 'font-black text-slate-900 shadow-inner text-[10px] sm:text-xs' : 'font-bold text-slate-800 text-[10px] sm:text-[11px]';
+            
+            return `<td class="p-1 sm:p-2 border-r border-slate-200 ${weight}" style="background-color: ${bg}">
+                       <div>${mainStr}</div>
+                       ${subStr}
+                    </td>`;
+        }
+
+        // --- 10. MÓDULO: GERADOR DE DADOS FAKE PARA CASO DE ERRO DE CONEXÃO ---
         function generateMockClimateData() {
             const data = []; const today = new Date(); const locais = ['Fazenda Oásis', 'Estufa 1'];
             for (let i = 14; i >= 0; i--) {
@@ -1749,6 +2611,7 @@
             }
             return data;
         }
+
     </script>
 </body>
 </html>
