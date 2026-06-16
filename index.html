@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard Climático SPG - Agronomia</title>
     
-    <!-- Ícones -->
-    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/512/partly-cloudy-day.png">
-    
+    <!-- Ícones / PWA (preenchidos via JS por applyBrandAssets) -->
+    <link rel="icon" type="image/svg+xml" id="siteFavicon" href="">
+    <link rel="apple-touch-icon" id="siteAppleTouchIcon" href="">
+    <link rel="manifest" id="siteManifest" href="">
     <meta name="theme-color" content="#3b82f6">
-    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SPG Clima">
+
     <!-- Bibliotecas Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -94,6 +98,10 @@
             
             #printAreaTabela .sticky-col, #printAreaTabela .sticky-header { position: static !important; box-shadow: none !important; }
 
+            /* Cards de Diagnóstico IA na Impressão */
+            #p_Diagnostico, #p_Diagnostico * { color: #1e293b !important; }
+            #p_Diagnostico div:not(.insight-accent):not(.insight-badge) { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
+
             /* Ocultar áreas de impressão inativas */
             body.tab-dash #printAreaTabela, body.tab-dash #printAreaDetalhada, body.tab-dash #printAreaComparativo, body.tab-dash #printAreaPaineis { display: none !important; }
             body.tab-tabela #printAreaDashboard, body.tab-tabela #printAreaDetalhada, body.tab-tabela #printAreaComparativo, body.tab-tabela #printAreaPaineis { display: none !important; }
@@ -108,7 +116,7 @@
         .sticky-header { position: sticky; top: 0; z-index: 30; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen pb-20 select-none relative tab-dash">
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-24 sm:pb-10 select-none relative tab-dash">
 
     <!-- ========================================================================= -->
     <!-- ÁREA WEB (Oculta na impressão com print:hidden)                           -->
@@ -142,23 +150,28 @@
             </div>
         </div>
 
-        <!-- SELECTOR DE ABAS -->
-        <div class="flex justify-center mt-6">
-            <div class="bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 inline-flex flex-wrap justify-center gap-2 mx-4">
-                <button onclick="switchTab('DASH')" id="btnTabDash" class="px-5 py-2 rounded-lg text-sm font-bold bg-brand-600 text-white shadow-sm transition-all flex items-center gap-2">
-                    <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Painel Gráfico
+        <!-- SELECTOR DE ABAS (barra fixa no rodapé em mobile, pill no topo em telas maiores) -->
+        <div class="fixed sm:static inset-x-0 bottom-0 z-50 sm:z-auto flex justify-center sm:mt-6 px-0 sm:px-2">
+            <div class="bg-white w-full sm:w-auto p-1 sm:p-1.5 rounded-none sm:rounded-xl shadow-[0_-4px_16px_rgba(0,0,0,0.08)] sm:shadow-sm border-t sm:border border-slate-200 flex sm:flex-wrap sm:justify-center gap-1 sm:gap-2 mx-0 sm:mx-4 max-w-full overflow-x-auto hide-scrollbar pb-[env(safe-area-inset-bottom)] sm:pb-1.5">
+                <button onclick="switchTab('DASH')" id="btnTabDash" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-brand-600 text-white shadow-sm transition-all whitespace-nowrap">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span class="sm:hidden">Painel</span><span class="hidden sm:inline">Painel Gráfico</span>
                 </button>
-                <button onclick="switchTab('TABELA')" id="btnTabTable" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
-                    <i data-lucide="table" class="w-4 h-4"></i> Tabela Horária
+                <button onclick="switchTab('TABELA')" id="btnTabTable" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap">
+                    <i data-lucide="table" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span class="sm:hidden">Tabela</span><span class="hidden sm:inline">Tabela Horária</span>
                 </button>
-                <button onclick="switchTab('DETALHADA')" id="btnTabDetalhada" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
-                    <i data-lucide="pie-chart" class="w-4 h-4"></i> Análise Detalhada
+                <button onclick="switchTab('DETALHADA')" id="btnTabDetalhada" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap">
+                    <i data-lucide="pie-chart" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span class="sm:hidden">Detalhes</span><span class="hidden sm:inline">Análise Detalhada</span>
                 </button>
-                <button onclick="switchTab('COMPARE')" id="btnTabCompare" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
-                    <i data-lucide="git-compare" class="w-4 h-4"></i> Cruzamento
+                <button onclick="switchTab('COMPARE')" id="btnTabCompare" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap">
+                    <i data-lucide="git-compare" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span>Cruzamento</span>
                 </button>
-                <button onclick="switchTab('PAINEIS')" id="btnTabPaineis" class="px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Painéis Lado a Lado
+                <button onclick="switchTab('PAINEIS')" id="btnTabPaineis" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span class="sm:hidden">Painéis</span><span class="hidden sm:inline">Painéis Lado a Lado</span>
                 </button>
             </div>
         </div>
@@ -259,7 +272,7 @@
                         <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="thermometer" class="w-24 h-24 text-red-500"></i></div>
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Temp. Média</span>
                         <div class="flex items-baseline gap-1 relative z-10">
-                            <span id="kpiTempMedia" class="text-3xl font-black text-red-600">--</span>
+                            <span id="kpiTempMedia" class="text-2xl sm:text-3xl font-black text-red-600">--</span>
                             <span class="text-sm font-bold text-red-400">°C</span>
                         </div>
                         <div class="mt-2 flex justify-between text-[10px] font-bold text-slate-500 relative z-10">
@@ -272,7 +285,7 @@
                         <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="droplets" class="w-24 h-24 text-blue-500"></i></div>
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Umidade Relativa</span>
                         <div class="flex items-baseline gap-1 relative z-10">
-                            <span id="kpiUmidMedia" class="text-3xl font-black text-blue-600">--</span>
+                            <span id="kpiUmidMedia" class="text-2xl sm:text-3xl font-black text-blue-600">--</span>
                             <span class="text-sm font-bold text-blue-400">%</span>
                         </div>
                         <div class="mt-2 flex justify-between text-[10px] font-bold text-slate-500 relative z-10">
@@ -285,8 +298,8 @@
                         <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="sun" class="w-24 h-24 text-amber-500"></i></div>
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Luminosidade</span>
                         <div class="flex items-baseline gap-1 relative z-10">
-                            <span id="kpiLuzMedia" class="text-3xl font-black text-amber-500 hidden">--</span>
-                            <span id="kpiLuzMax" class="text-3xl font-black text-amber-500">--</span>
+                            <span id="kpiLuzMedia" class="text-2xl sm:text-3xl font-black text-amber-500 hidden">--</span>
+                            <span id="kpiLuzMax" class="text-2xl sm:text-3xl font-black text-amber-500">--</span>
                             <span class="text-sm font-bold text-amber-400">kLux</span>
                         </div>
                         <div class="mt-2 flex justify-between text-[10px] font-bold text-slate-500 relative z-10">
@@ -298,7 +311,7 @@
                         <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="leaf" class="w-24 h-24 text-emerald-500"></i></div>
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">VPD (Transpiração)</span>
                         <div class="flex items-baseline gap-1 relative z-10">
-                            <span id="kpiVPD" class="text-3xl font-black text-emerald-600">--</span>
+                            <span id="kpiVPD" class="text-2xl sm:text-3xl font-black text-emerald-600">--</span>
                             <span class="text-sm font-bold text-emerald-400">kPa</span>
                         </div>
                         <div class="mt-2 flex items-center text-[10px] font-bold text-slate-500 relative z-10">
@@ -310,7 +323,7 @@
                         <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="cloud-rain" class="w-24 h-24 text-sky-500"></i></div>
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Acumulado Chuva</span>
                         <div class="flex items-baseline gap-1 relative z-10">
-                            <span id="kpiChuvaTotal" class="text-3xl font-black text-sky-600">--</span>
+                            <span id="kpiChuvaTotal" class="text-2xl sm:text-3xl font-black text-sky-600">--</span>
                             <span class="text-sm font-bold text-sky-400">mm</span>
                         </div>
                         <div class="mt-2 flex flex-col gap-1 text-[10px] font-bold text-slate-500 relative z-10">
@@ -327,17 +340,19 @@
                 </div>
 
                 <!-- Insight Card Web -->
-                <div id="dashInsightCard" class="hidden bg-slate-800 p-5 rounded-2xl shadow-lg mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center transition-all duration-500 relative overflow-hidden">
-                    <div class="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-transparent to-white/5 rounded-full blur-2xl"></div>
-                    <div class="bg-white/10 p-3 rounded-full text-white shrink-0 backdrop-blur-sm">
-                        <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                <div id="dashInsightCard" class="hidden bg-white border border-slate-200 p-5 sm:p-6 rounded-2xl shadow-sm mb-8 transition-all duration-500 relative overflow-hidden">
+                    <div class="flex items-center gap-3 mb-5 relative z-10">
+                        <div class="bg-brand-50 p-3 rounded-xl text-brand-600 shrink-0 border border-brand-100">
+                            <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                Diagnóstico Agronômico <span class="bg-brand-500 text-white text-[9px] px-2 py-0.5 rounded-full">I.A.</span>
+                            </h4>
+                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">Análise automática com base nos filtros selecionados</p>
+                        </div>
                     </div>
-                    <div class="flex-1 relative z-10">
-                        <h4 class="text-xs font-black text-brand-300 uppercase tracking-widest mb-2 flex items-center gap-2">
-                            Diagnóstico Agronômico <span class="bg-brand-500 text-white text-[9px] px-2 py-0.5 rounded-full">I.A.</span>
-                        </h4>
-                        <div id="dashInsightText" class="text-sm text-slate-200 leading-relaxed space-y-3"></div>
-                    </div>
+                    <div id="dashInsightText" class="grid grid-cols-1 lg:grid-cols-2 gap-3 relative z-10"></div>
                 </div>
 
                 <!-- Gráficos Web -->
@@ -348,7 +363,7 @@
                                 <i data-lucide="clock" class="w-4 h-4 text-purple-500"></i> Comportamento Médio Diário (Perfil Horário)
                             </h3>
                         </div>
-                        <div class="relative h-[350px] w-full"><canvas id="chartPerfil"></canvas></div>
+                        <div class="relative h-[260px] sm:h-[350px] w-full"><canvas id="chartPerfil"></canvas></div>
                         <div id="perfilResumo" class="mt-4 text-[11px] sm:text-xs font-bold text-slate-600 text-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm hidden"></div>
                     </div>
 
@@ -358,7 +373,7 @@
                                 <i data-lucide="thermometer" class="w-4 h-4 text-red-500"></i> Amplitude Térmica (Temperatura Mín e Máx)
                             </h3>
                         </div>
-                        <div class="relative h-[350px] w-full"><canvas id="chartTemp"></canvas></div>
+                        <div class="relative h-[260px] sm:h-[350px] w-full"><canvas id="chartTemp"></canvas></div>
                         <div id="tempResumo" class="mt-4 text-[11px] sm:text-xs font-bold text-slate-600 text-center bg-slate-50 p-2 sm:p-3 rounded-xl border border-slate-200 shadow-sm hidden"></div>
                     </div>
 
@@ -368,7 +383,7 @@
                                 <i data-lucide="droplets" class="w-4 h-4 text-blue-500"></i> Variação de Umidade (Mín e Máx)
                             </h3>
                         </div>
-                        <div class="relative h-[350px] w-full"><canvas id="chartUmid"></canvas></div>
+                        <div class="relative h-[260px] sm:h-[350px] w-full"><canvas id="chartUmid"></canvas></div>
                         <div id="umidResumo" class="mt-4 text-[11px] sm:text-xs font-bold text-slate-600 text-center bg-slate-50 p-2 sm:p-3 rounded-xl border border-slate-200 shadow-sm hidden"></div>
                     </div>
 
@@ -376,7 +391,7 @@
                         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4 flex items-center gap-2">
                             <i data-lucide="sun-dim" class="w-4 h-4 text-amber-500"></i> Radiação Solar (kLux)
                         </h3>
-                        <div class="relative h-[350px] w-full"><canvas id="chartLuz"></canvas></div>
+                        <div class="relative h-[260px] sm:h-[350px] w-full"><canvas id="chartLuz"></canvas></div>
                         <div id="luzResumo" class="mt-4 text-[11px] sm:text-xs font-bold text-slate-600 text-center bg-slate-50 p-2 sm:p-3 rounded-xl border border-slate-200 shadow-sm hidden"></div>
                     </div>
 
@@ -384,7 +399,7 @@
                         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4 flex items-center gap-2">
                             <i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i> Déficit de Pressão de Vapor (VPD)
                         </h3>
-                        <div class="relative h-[350px] w-full"><canvas id="chartVPD"></canvas></div>
+                        <div class="relative h-[260px] sm:h-[350px] w-full"><canvas id="chartVPD"></canvas></div>
                         <div id="vpdResumo" class="mt-4 text-[11px] sm:text-xs font-bold text-slate-600 text-center bg-slate-50 p-2 sm:p-3 rounded-xl border border-slate-200 shadow-sm hidden"></div>
                     </div>
 
@@ -392,7 +407,7 @@
                         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4 flex items-center gap-2">
                             <i data-lucide="cloud-rain" class="w-4 h-4 text-sky-500"></i> Pluviometria (mm)
                         </h3>
-                        <div class="relative h-[350px] w-full"><canvas id="chartChuva"></canvas></div>
+                        <div class="relative h-[260px] sm:h-[350px] w-full"><canvas id="chartChuva"></canvas></div>
                         <div id="chuvaResumo" class="mt-4 text-[11px] sm:text-xs font-bold text-slate-600 text-center bg-slate-50 p-2 sm:p-3 rounded-xl border border-slate-200 shadow-sm hidden"></div>
                     </div>
                 </div>
@@ -411,10 +426,16 @@
                     </h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Mês de Referência</label>
                         <input type="month" id="tabMonth" onchange="generateTable()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white cursor-pointer">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Local</label>
+                        <select id="tabLocal" onchange="generateTable()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                            <option value="TODOS">Todos os Locais</option>
+                        </select>
                     </div>
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Variável</label>
@@ -434,8 +455,7 @@
                     </div>
                 </div>
 
-                <div class="mb-2 flex items-center justify-between text-xs font-bold text-slate-500">
-                    <p>* O filtro de "Local" na aba principal também afeta esta tabela.</p>
+                <div class="mb-2 flex items-center justify-end text-xs font-bold text-slate-500">
                     <div class="flex gap-2 items-center">
                         <span class="w-3 h-3 rounded bg-blue-100 border border-blue-200"></span> Frio/Úmido
                         <span class="w-3 h-3 rounded bg-green-100 border border-green-200 ml-2"></span> Ideal
@@ -469,7 +489,7 @@
                     </h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-inner">
                     <div class="flex flex-col">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Métrica Analisada</label>
                         <select id="detMetrica" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-brand-300 bg-brand-50 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 cursor-pointer">
@@ -480,34 +500,41 @@
                         </select>
                     </div>
                     <div class="flex flex-col">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Ano Base (Para Gráfico de Pizza)</label>
-                        <select id="detAno" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer"></select>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Local</label>
+                        <select id="detLocal" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                            <option value="TODOS">Todos os Locais</option>
+                        </select>
                     </div>
-                </div>
-
-                <div class="mb-4 flex items-center justify-between text-xs font-bold text-slate-500">
-                    <p>* Os filtros de "Local", "Aparelho" e "Data" da primeira aba afetam estes gráficos.</p>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Aparelho</label>
+                        <select id="detAparelho" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                            <option value="TODOS">Todos</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Data Início</label>
+                        <input type="date" id="detDataInicio" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white cursor-pointer">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Data Término</label>
+                        <input type="date" id="detDataFim" onchange="generateDetailedAnalysis()" class="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white cursor-pointer">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
                         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4">Histórico por Ano</h3>
-                        <div class="relative h-[300px] w-full"><canvas id="chartDetAno"></canvas></div>
+                        <div class="relative h-[240px] sm:h-[300px] w-full"><canvas id="chartDetAno"></canvas></div>
                     </div>
-                    
+
                     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
                         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4">Evolução Mensal Completa</h3>
-                        <div class="relative h-[300px] w-full"><canvas id="chartDetMesEvolucao"></canvas></div>
+                        <div class="relative h-[240px] sm:h-[300px] w-full"><canvas id="chartDetMesEvolucao"></canvas></div>
                     </div>
-                    
+
                     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:col-span-2">
                         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4">Tendência por Semana</h3>
-                        <div class="relative h-[300px] w-full"><canvas id="chartDetSemana"></canvas></div>
-                    </div>
-                    
-                    <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-inner flex flex-col lg:col-span-2 items-center justify-center">
-                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4 w-full text-left">Proporção Mensal (Ano Base)</h3>
-                        <div class="relative h-[350px] w-full max-w-lg"><canvas id="chartDetPizza"></canvas></div>
+                        <div class="relative h-[240px] sm:h-[300px] w-full"><canvas id="chartDetSemana"></canvas></div>
                     </div>
                 </div>
 
@@ -600,7 +627,7 @@
                         <span>Curva Comparativa</span>
                         <span id="compResumoDiferenca" class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-lg"></span>
                     </h3>
-                    <div class="relative h-[400px] w-full"><canvas id="chartComparativo"></canvas></div>
+                    <div class="relative h-[280px] sm:h-[400px] w-full"><canvas id="chartComparativo"></canvas></div>
                 </div>
             </div>
         </div>
@@ -831,7 +858,6 @@
             <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Histórico Anual</span><img id="pd_ImgAno" class="print-chart-img"></div>
             <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Evolução Mensal</span><img id="pd_ImgMes" class="print-chart-img"></div>
             <div class="page-break-before print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Tendência Semanal</span><img id="pd_ImgSem" class="print-chart-img"></div>
-            <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Proporção Mensal</span><img id="pd_ImgPizza" class="print-chart-img" style="height: 300px !important;"></div>
         </div>
     </div>
 
@@ -881,7 +907,7 @@
         let rawClimateData = [];
         let chartPerfilInst = null, chartTempInst = null, chartUmidInst = null;
         let chartLuzInst = null, chartVPDInst = null, chartChuvaInst = null;
-        let chartDetAnoInst = null, chartDetMesInst = null, chartDetSemInst = null, chartDetPizzaInst = null;
+        let chartDetAnoInst = null, chartDetMesInst = null, chartDetSemInst = null;
         let chartCompareInst = null;
         let chartPainel1Inst = null, chartPainel2Inst = null;
         
@@ -901,6 +927,48 @@
             const es = 0.6108 * Math.exp((17.27 * t) / (t + 237.3));
             return es - (es * (u / 100));
         }
+
+        // --- MARCA / PWA: logo em SVG embutido (sem dependência externa) ---
+        const BRAND_LOGO_SVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <rect width="512" height="512" rx="96" fill="#eff6ff"/>
+                <rect x="8" y="8" width="496" height="496" rx="88" fill="none" stroke="#bfdbfe" stroke-width="8"/>
+                <circle cx="195" cy="180" r="78" fill="#f59e0b"/>
+                <path d="M120 330c-38 0-69-31-69-69 0-36 28-66 64-69 9-50 53-87 105-87 51 0 95 36 105 84 41 2 73 36 73 76 0 42-34 76-76 76H120z" fill="#2563eb"/>
+                <text x="256" y="462" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="3" fill="#0f172a">SPG</text>
+            </svg>
+        `.trim();
+
+        function getBrandLogoDataUri() {
+            return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(BRAND_LOGO_SVG)}`;
+        }
+
+        function applyBrandAssets() {
+            const logoUri = getBrandLogoDataUri();
+            const favicon = document.getElementById('siteFavicon');
+            const appleTouchIcon = document.getElementById('siteAppleTouchIcon');
+            const manifestLink = document.getElementById('siteManifest');
+
+            if (favicon) favicon.href = logoUri;
+            if (appleTouchIcon) appleTouchIcon.href = logoUri;
+            if (manifestLink) {
+                const manifest = {
+                    name: 'SPG Clima - Monitoramento Ambiental',
+                    short_name: 'SPG Clima',
+                    start_url: '.',
+                    display: 'standalone',
+                    background_color: '#f1f5f9',
+                    theme_color: '#3b82f6',
+                    icons: [
+                        { src: logoUri, sizes: '192x192', type: 'image/svg+xml' },
+                        { src: logoUri, sizes: '512x512', type: 'image/svg+xml' }
+                    ]
+                };
+                manifestLink.href = `data:application/manifest+json,${encodeURIComponent(JSON.stringify(manifest))}`;
+            }
+        }
+
+        applyBrandAssets();
 
         document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('tabMonth').value = new Date().toISOString().slice(0,7);
@@ -933,8 +1001,8 @@
             const bComp = document.getElementById('btnTabCompare');
             const bPan = document.getElementById('btnTabPaineis');
             
-            const activeClass = "px-5 py-2 rounded-lg text-sm font-bold bg-brand-600 text-white shadow-sm transition-all flex items-center gap-2";
-            const inactiveClass = "px-5 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2";
+            const activeClass = "flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-brand-600 text-white shadow-sm transition-all whitespace-nowrap";
+            const inactiveClass = "flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap";
 
             bDash.className = tab === 'DASH' ? activeClass : inactiveClass;
             bTab.className = tab === 'TABELA' ? activeClass : inactiveClass;
@@ -1024,8 +1092,8 @@
             if (ptTitulo) ptTitulo.innerText = `Relatório Tabular de ${met} - Mês ${pMes}`;
             const ptDataEmissao = document.getElementById('pt_DataEmissao');
             if (ptDataEmissao) ptDataEmissao.innerText = `Emissão: ` + new Date().toLocaleString('pt-BR');
-            const locals = getSelectedLocals();
-            let localText = locals.length === 0 ? 'Nenhum' : (!locals.includes('TODOS') ? locals.join(', ') : 'Todos');
+            const tabLocalEl = document.getElementById('tabLocal');
+            const localText = tabLocalEl && tabLocalEl.value !== 'TODOS' ? tabLocalEl.value : 'Todos';
             const ptLocal = document.getElementById('pt_Local');
             if (ptLocal) ptLocal.innerText = `Local: ${localText}`;
 
@@ -1047,8 +1115,7 @@
             const charts = [
                 { inst: chartDetAnoInst, img: 'pd_ImgAno' },
                 { inst: chartDetMesInst, img: 'pd_ImgMes' },
-                { inst: chartDetSemInst, img: 'pd_ImgSem' },
-                { inst: chartDetPizzaInst, img: 'pd_ImgPizza' }
+                { inst: chartDetSemInst, img: 'pd_ImgSem' }
             ];
             
             charts.forEach(c => {
@@ -1106,10 +1173,12 @@
             const getTxt = (id) => { const el = document.getElementById(id); return el ? el.innerText : '--'; };
             const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
             
-            const metrica = getVal('dashMetrica');
-            const showTermo = (metrica === 'TODAS' || metrica === 'TERMO');
-            const showLuz = (metrica === 'TODAS' || metrica === 'LUZ');
-            const showChuva = (metrica === 'TODAS' || metrica === 'CHUVA');
+            const isVisible = (id) => { const el = document.getElementById(id); return !!el && el.style.display !== 'none'; };
+            const showTemp = isVisible('kpi-card-temp');
+            const showUmid = isVisible('kpi-card-umid');
+            const showVpd = isVisible('kpi-card-vpd');
+            const showLuz = isVisible('kpi-card-luz');
+            const showChuva = isVisible('kpi-card-chuva');
 
             setTxt('p_DataGeracao', new Date().toLocaleString('pt-BR'));
             
@@ -1139,11 +1208,11 @@
                 if(td) td.style.display = show ? 'table-cell' : 'none';
             };
 
-            toggleCol('pth_TempMed', 'p_TempMed', showTermo);
-            toggleCol('pth_TempMax', 'p_TempMax', showTermo);
-            toggleCol('pth_UmidMed', 'p_UmidMed', showTermo);
-            toggleCol('pth_UmidMax', 'p_UmidMax', showTermo);
-            toggleCol('pth_VpdMed', 'p_VpdMed', showTermo);
+            toggleCol('pth_TempMed', 'p_TempMed', showTemp);
+            toggleCol('pth_TempMax', 'p_TempMax', showTemp);
+            toggleCol('pth_UmidMed', 'p_UmidMed', showUmid);
+            toggleCol('pth_UmidMax', 'p_UmidMax', showUmid);
+            toggleCol('pth_VpdMed', 'p_VpdMed', showVpd);
             toggleCol('pth_LuzMax', 'p_LuzMax', showLuz);
             toggleCol('pth_ChuvaTot', 'p_ChuvaTot', showChuva);
             toggleCol('pth_ChuvaMed', 'p_ChuvaMed', showChuva);
@@ -1187,10 +1256,10 @@
             copyResumo('chuvaResumo', 'p_ChuvaResumo');
 
             const charts = [
-                { inst: chartPerfilInst, img: 'p_ImgPerfil', box: 'p_BoxPerfil', show: showTermo },
-                { inst: chartTempInst, img: 'p_ImgTemp', box: 'p_BoxTemp', show: showTermo },
-                { inst: chartUmidInst, img: 'p_ImgUmid', box: 'p_BoxUmid', show: showTermo },
-                { inst: chartVPDInst, img: 'p_ImgVPD', box: 'p_BoxVPD', show: showTermo },
+                { inst: chartPerfilInst, img: 'p_ImgPerfil', box: 'p_BoxPerfil', show: isVisible('chart-wrapper-perfil') },
+                { inst: chartTempInst, img: 'p_ImgTemp', box: 'p_BoxTemp', show: showTemp },
+                { inst: chartUmidInst, img: 'p_ImgUmid', box: 'p_BoxUmid', show: showUmid },
+                { inst: chartVPDInst, img: 'p_ImgVPD', box: 'p_BoxVPD', show: showVpd },
                 { inst: chartLuzInst, img: 'p_ImgLuz', box: 'p_BoxLuz', show: showLuz },
                 { inst: chartChuvaInst, img: 'p_ImgChuva', box: 'p_BoxChuva', show: showChuva }
             ];
@@ -1301,17 +1370,18 @@
                     if (Array.from(set).includes(cur)) sel.value = cur;
                 };
                 updateSel('dashAparelho', aparelhos, 'Aparelhos');
+                updateSel('detAparelho', aparelhos, 'Aparelhos');
 
                 // Popula Dropdown de LOCAIS da aba Comparativo e Painéis
                 const sortedLocais = Array.from(locais).sort();
                 const htmlLocaisComp = sortedLocais.map(l => `<option value="${l}">${l}</option>`).join('');
                 const htmlLocaisPan = `<option value="TODOS">Todos os Locais</option>` + htmlLocaisComp;
-                
+
                 const syncDrop = (id, defIdx) => {
                     const el = document.getElementById(id);
                     if(el) {
                         const val = el.value;
-                        el.innerHTML = id.includes('pnLocal') ? htmlLocaisPan : htmlLocaisComp;
+                        el.innerHTML = (id.includes('pnLocal') || id === 'tabLocal' || id === 'detLocal') ? htmlLocaisPan : htmlLocaisComp;
                         const validOpts = Array.from(el.options).map(o=>o.value);
                         if(validOpts.includes(val)) el.value = val;
                         else if (validOpts.length > defIdx) el.value = validOpts[defIdx];
@@ -1320,8 +1390,10 @@
 
                 syncDrop('compLocal1', 0);
                 syncDrop('compLocal2', 1);
-                syncDrop('pnLocal1', 0); 
+                syncDrop('pnLocal1', 0);
                 syncDrop('pnLocal2', 0);
+                syncDrop('tabLocal', 0);
+                syncDrop('detLocal', 0);
 
                 // Dropdown Múltiplo do Dashboard Principal
                 const localContainer = document.getElementById('dashLocalOptions');
@@ -1351,7 +1423,7 @@
                                 <input type="checkbox" name="localCb" value="${l}" onchange="toggleSingleLocal()" ${checked} class="w-4 h-4 text-brand-600 bg-slate-100 border-slate-300 rounded focus:ring-brand-500 cursor-pointer shrink-0">
                                 <span class="text-sm font-bold text-slate-600 truncate">${l}</span>
                             </label>
-                            <button type="button" onclick="selectOnlyLocal('${l}', event)" class="hidden group-hover:block text-[10px] font-bold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded transition-colors shrink-0 ml-2 shadow-sm border border-brand-200">
+                            <button type="button" onclick="selectOnlyLocal('${l}', event)" class="block sm:hidden sm:group-hover:block text-[10px] font-bold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded transition-colors shrink-0 ml-2 shadow-sm border border-brand-200">
                                 Somente
                             </button>
                         </div>
@@ -1394,7 +1466,6 @@
                 }
             };
             
-            setDropdown('detAno', true, 0);
             setDropdown('compAno', true, 0);
             setDropdown('pnAno1', false, 0); 
             setDropdown('pnAno2', false, 1); 
@@ -1768,12 +1839,11 @@
             if (!rawClimateData || rawClimateData.length === 0) return;
 
             const metrica = document.getElementById('detMetrica').value;
-            const anoBase = document.getElementById('detAno').value;
-            const selectedLocals = getSelectedLocals();
-            const aparelho = document.getElementById('dashAparelho').value;
+            const localFiltro = document.getElementById('detLocal').value;
+            const aparelho = document.getElementById('detAparelho').value;
 
-            const dInicio = document.getElementById('dashDataInicio').value;
-            const dFim = document.getElementById('dashDataFim').value;
+            const dInicio = document.getElementById('detDataInicio').value;
+            const dFim = document.getElementById('detDataFim').value;
 
             let isSum = (metrica === 'CHUVA');
             let isMax = (metrica === 'LUZ');
@@ -1791,11 +1861,11 @@
                 if (dFim && d > new Date(dFim)) return false;
                 
                 const rowLocal = row.local !== undefined && row.local !== null ? String(row.local).trim() : '';
-                if (selectedLocals.length > 0 && !selectedLocals.includes('TODOS') && !selectedLocals.includes(rowLocal)) return false;
-                
+                if (localFiltro !== 'TODOS' && rowLocal !== localFiltro) return false;
+
                 const aparelhoLimpo = row.aparelho !== undefined && row.aparelho !== null ? String(row.aparelho).trim() : '';
                 if (aparelho !== 'TODOS' && aparelhoLimpo !== aparelho) return false;
-                
+
                 if (metrica === 'T' && !hasData(row.temperatura)) return false;
                 if (metrica === 'U' && !hasData(row.umidade)) return false;
                 if (metrica === 'LUZ' && !hasData(row.luminosidade)) return false;
@@ -1804,10 +1874,9 @@
                 return true;
             });
 
-            const dataByYear = {}; 
-            const dataByEvolMes = {}; 
-            const dataBySemana = {}; 
-            const dataPizzaMes = {}; 
+            const dataByYear = {};
+            const dataByEvolMes = {};
+            const dataBySemana = {};
 
             filtered.forEach(row => {
                 const parts = String(row.data).split('/');
@@ -1837,11 +1906,6 @@
                     const yw = `${y}-S${String(weekNum).padStart(2,'0')}`;
                     if(!dataBySemana[yw]) dataBySemana[yw] = [];
                     dataBySemana[yw].push(val);
-
-                    if (anoBase === 'TODOS' || anoBase === y) {
-                        if(!dataPizzaMes[m]) dataPizzaMes[m] = [];
-                        dataPizzaMes[m].push(val);
-                    }
                 }
             });
 
@@ -1861,19 +1925,12 @@
             const lblsWeek = Object.keys(dataBySemana).sort();
             const valsWeek = lblsWeek.map(k => aggregate(dataBySemana[k]));
 
-            const monthNames = { '01':'Jan', '02':'Fev', '03':'Mar', '04':'Abr', '05':'Mai', '06':'Jun', '07':'Jul', '08':'Ago', '09':'Set', '10':'Out', '11':'Nov', '12':'Dez' };
-            const lblsPizza = Object.keys(dataPizzaMes).sort();
-            const valsPizza = lblsPizza.map(k => aggregate(dataPizzaMes[k]));
-            const labelsPizzaNames = lblsPizza.map(k => monthNames[k]);
-
             const getColors = (met) => {
                 if(met === 'CHUVA') return { bg: 'rgba(14, 165, 233, 0.6)', border: '#0284c7' };
                 if(met === 'T') return { bg: 'rgba(239, 68, 68, 0.6)', border: '#dc2626' };
                 if(met === 'U') return { bg: 'rgba(59, 130, 246, 0.6)', border: '#2563eb' };
                 return { bg: 'rgba(245, 158, 11, 0.6)', border: '#d97706' };
             };
-            
-            const pizzaColors = ['#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#06b6d4'];
 
             const cInfo = getColors(metrica);
             let titleY = metrica === 'CHUVA' ? 'mm' : (metrica === 'T' ? '°C' : (metrica === 'U' ? '%' : 'kLux'));
@@ -1901,21 +1958,9 @@
                 });
             };
 
-            const createPieChart = (ctxId, oldInst, labels, dataArr) => {
-                if(oldInst) oldInst.destroy();
-                const ctx = document.getElementById(ctxId);
-                if(!ctx) return null;
-                return new Chart(ctx, {
-                    type: 'doughnut',
-                    data: { labels: labels, datasets: [{ data: dataArr, backgroundColor: pizzaColors.slice(0, dataArr.length), borderWidth: 1 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: {weight:'bold'} } }, datalabels: { display: true, color: '#fff', font: {weight: 'bold', size: 10}, textStrokeColor: 'rgba(0,0,0,0.5)', textStrokeWidth: 2, formatter: (v, context) => { if(v === 0) return ''; let total = context.chart.data.datasets[0].data.reduce((a,b)=>a+b,0); return (v/total*100).toFixed(1) + '%'; } } } }
-                });
-            };
-
             chartDetAnoInst = createBarChart('chartDetAno', chartDetAnoInst, lblsYear, valsYear);
             chartDetMesInst = createLineChart('chartDetMesEvolucao', chartDetMesInst, lblsEvolMes, valsEvolMes);
             chartDetSemInst = createLineChart('chartDetSemana', chartDetSemInst, lblsWeek, valsWeek);
-            chartDetPizzaInst = createPieChart('chartDetPizza', chartDetPizzaInst, labelsPizzaNames, valsPizza);
         }
 
         // --- 9. MÓDULO: DASHBOARD PRINCIPAL (FILTRO, INSIGHTS, GRAFICOS) ---
@@ -1986,7 +2031,7 @@
                 let sumT=0, maxT=-Infinity, minT=Infinity, countT=0;
                 let sumU=0, maxU=-Infinity, minU=Infinity, countU=0;
                 let sumL=0, maxL=-Infinity, countL=0;
-                let sumC=0; 
+                let sumC=0, countC=0;
                 
                 const rainByDay = {}; 
 
@@ -2023,7 +2068,7 @@
                     if(!isNaN(t)) { grouped[key][ent].t.push(t); sumT+=t; countT++; if(t>maxT) maxT=t; if(t<minT) minT=t; }
                     if(!isNaN(u)) { grouped[key][ent].u.push(u); sumU+=u; countU++; if(u>maxU) maxU=u; if(u<minU) minU=u; }
                     if(!isNaN(l)) { grouped[key][ent].l.push(l); sumL+=l; countL++; if(l>maxL) maxL=l; }
-                    if(!isNaN(c)) { grouped[key][ent].c += c; sumC+=c; rainByDay[dKey] += c; }
+                    if(!isNaN(c)) { grouped[key][ent].c += c; sumC+=c; countC++; rainByDay[dKey] += c; }
 
                     if (hVal !== null && !isNaN(hVal) && hVal >= 0 && hVal <= 23) {
                         if(!isNaN(t)) hourlyProfile[hVal].t.push(t);
@@ -2184,29 +2229,38 @@
 
                 renderCharts(grouped, timeLabels, compareMode, metrica, rainStatsObj);
                 generateInsights(maxT, minT, maxU, minU, vpdVal, maxL, sumC, metrica, selectedLocals);
-                updateVisibility(metrica);
+                updateVisibility(metrica, { countT, countU, countL, countC });
             } catch (err) {
                 console.error("Erro ao gerar/filtrar o painel:", err);
             }
         }
 
-        function updateVisibility(metrica) {
-            const showTermo = (metrica === 'TODAS' || metrica === 'TERMO');
-            const showLuz = (metrica === 'TODAS' || metrica === 'LUZ');
-            const showChuva = (metrica === 'TODAS' || metrica === 'CHUVA');
+        function updateVisibility(metrica, stats) {
+            const { countT = 0, countU = 0, countL = 0, countC = 0 } = stats || {};
 
-            const kpiGrid = document.getElementById('dashKPIs');
-            if (kpiGrid) kpiGrid.className = 'grid grid-cols-2 gap-4 mb-6 ' + (metrica === 'TODAS' ? 'md:grid-cols-5' : 'md:grid-cols-3');
+            const metricaTermo = (metrica === 'TODAS' || metrica === 'TERMO');
+            const metricaLuz = (metrica === 'TODAS' || metrica === 'LUZ');
+            const metricaChuva = (metrica === 'TODAS' || metrica === 'CHUVA');
+
+            const showTemp = metricaTermo && countT > 0;
+            const showUmid = metricaTermo && countU > 0;
+            const showVpd = metricaTermo && countT > 0 && countU > 0;
+            const showLuz = metricaLuz && countL > 0;
+            const showChuva = metricaChuva && countC > 0;
 
             const toggleDisp = (id, cond) => { const el = document.getElementById(id); if(el) el.style.display = cond ? 'flex' : 'none'; };
-            
-            toggleDisp('kpi-card-temp', showTermo); toggleDisp('kpi-card-umid', showTermo);
-            toggleDisp('kpi-card-vpd', showTermo); toggleDisp('kpi-card-luz', showLuz);
+
+            toggleDisp('kpi-card-temp', showTemp); toggleDisp('kpi-card-umid', showUmid);
+            toggleDisp('kpi-card-vpd', showVpd); toggleDisp('kpi-card-luz', showLuz);
             toggleDisp('kpi-card-chuva', showChuva);
 
-            toggleDisp('chart-wrapper-temp', showTermo); toggleDisp('chart-wrapper-umid', showTermo);
-            toggleDisp('chart-wrapper-vpd', showTermo); toggleDisp('chart-wrapper-luz', showLuz);
+            toggleDisp('chart-wrapper-temp', showTemp); toggleDisp('chart-wrapper-umid', showUmid);
+            toggleDisp('chart-wrapper-vpd', showVpd); toggleDisp('chart-wrapper-luz', showLuz);
             toggleDisp('chart-wrapper-chuva', showChuva);
+
+            const visibleCount = [showTemp, showUmid, showVpd, showLuz, showChuva].filter(Boolean).length;
+            const kpiGrid = document.getElementById('dashKPIs');
+            if (kpiGrid) kpiGrid.className = 'grid grid-cols-2 gap-4 mb-6 md:grid-cols-' + Math.max(1, Math.min(5, visibleCount));
         }
 
         function generateInsights(mt, minT, mu, minU, v, ml, sc, metrica, selectedLocals) {
@@ -2225,19 +2279,33 @@
 
             let culturaContext = Array.from(culturas).join(' e ');
             if (culturaContext) {
-                alerts.push(`<div class="w-full text-[10px] text-brand-500 font-bold mb-2 uppercase tracking-widest pb-1 border-b border-slate-500/20"><i data-lucide="sprout" class="inline w-3 h-3 mb-0.5"></i> Parâmetros Otimizados para: ${culturaContext}</div>`);
+                alerts.push(`<div class="col-span-full flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-xl px-3 py-2 text-[11px] text-brand-700 font-black uppercase tracking-widest"><i data-lucide="sprout" class="w-3.5 h-3.5 shrink-0"></i> Parâmetros Otimizados para: ${culturaContext}</div>`);
             }
 
-            const addAlert = (icon, title, desc, rec) => {
+            const insightColors = {
+                red:     { bg: 'bg-red-100',     text: 'text-red-600',     accent: 'bg-red-500' },
+                blue:    { bg: 'bg-blue-100',    text: 'text-blue-600',    accent: 'bg-blue-500' },
+                sky:     { bg: 'bg-sky-100',     text: 'text-sky-600',     accent: 'bg-sky-500' },
+                amber:   { bg: 'bg-amber-100',   text: 'text-amber-600',   accent: 'bg-amber-500' },
+                orange:  { bg: 'bg-orange-100',  text: 'text-orange-600',  accent: 'bg-orange-500' },
+                emerald: { bg: 'bg-emerald-100', text: 'text-emerald-600', accent: 'bg-emerald-500' },
+            };
+
+            const addAlert = (icon, title, desc, rec, color = 'red') => {
+                const c = insightColors[color] || insightColors.red;
                 alerts.push(`
-                    <div class="mb-2 pb-2 border-b border-slate-200/60 last:border-0 last:mb-0 last:pb-0">
-                        <p class="flex items-start gap-1 text-[12px] text-slate-800 leading-tight">
-                            <span class="text-base leading-none mt-0.5">${icon}</span>
-                            <span><strong>${title}:</strong> ${desc}</span>
-                        </p>
-                        <div class="mt-1 ml-6 text-[10px] text-slate-600 bg-white border border-slate-200 shadow-sm p-1.5 rounded-lg leading-snug">
-                            <span class="text-brand-600 font-black tracking-widest uppercase text-[8px] block mb-0.5">Ação Recomendada</span>
-                            ${rec}
+                    <div class="relative bg-slate-50 border border-slate-200 rounded-xl p-3.5 pl-4 overflow-hidden">
+                        <div class="insight-accent absolute left-0 top-0 bottom-0 w-1 ${c.accent}"></div>
+                        <div class="flex items-start gap-2.5">
+                            <div class="insight-badge ${c.bg} ${c.text} w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0">${icon}</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[12px] font-black text-slate-800 leading-tight">${title}</p>
+                                <p class="text-[11px] text-slate-500 leading-snug mt-0.5">${desc}</p>
+                            </div>
+                        </div>
+                        <div class="mt-2.5 ml-[42px] flex items-start gap-1.5 bg-white border border-slate-200 rounded-lg p-2 shadow-sm">
+                            <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5"></i>
+                            <p class="text-[10.5px] text-slate-600 leading-snug"><span class="text-brand-600 font-black uppercase tracking-wide text-[9px]">Ação: </span>${rec}</p>
                         </div>
                     </div>
                 `);
@@ -2245,35 +2313,35 @@
 
             if (metrica === 'TODAS' || metrica === 'TERMO') {
                 if (culturas.has('Brócolis')) {
-                    if(mt >= 28) addAlert('🔥', 'Alerta Brócolis (Calor Extremo)', `Pico de ${fmtLoc(mt)}°C. Alto risco de "buttoning" e má formação vascular.`, 'Aumentar a frequência de irrigação com pulsos curtos. Avaliar uso de telas termorrefletoras.');
-                    if(mu > 90) addAlert('💧', 'Alerta Brócolis (Fungos)', `Umidade excessiva (${fmtLoc(mu)}%). Atenção máxima para Podridão Negra.`, 'Melhorar a ventilação abrindo manejo lateral e zenital. Evitar regas à tarde.');
+                    if(mt >= 28) addAlert('🔥', 'Alerta Brócolis (Calor Extremo)', `Pico de ${fmtLoc(mt)}°C. Alto risco de "buttoning" e má formação vascular.`, 'Aumentar a frequência de irrigação com pulsos curtos. Avaliar uso de telas termorrefletoras.', 'red');
+                    if(mu > 90) addAlert('💧', 'Alerta Brócolis (Fungos)', `Umidade excessiva (${fmtLoc(mu)}%). Atenção máxima para Podridão Negra.`, 'Melhorar a ventilação abrindo manejo lateral e zenital. Evitar regas à tarde.', 'blue');
                 }
                 if (culturas.has('Pepino')) {
-                    if(mt >= 35) addAlert('🔥', 'Alerta Pepino (Calor Extremo)', `Picos de ${fmtLoc(mt)}°C afetam o pólen e causam abortamento.`, 'Acionar nebulização ou aspersão invertida. Garantir substrato úmido.');
-                    if(minT < 15 && minT !== Infinity) addAlert('❄️', 'Alerta Pepino (Frio)', `Mínima de ${fmtLoc(minT)}°C causa travamento do metabolismo.`, 'Fechar cortinas mais cedo para reter radiação térmica.');
-                    if(mu > 88) addAlert('💧', 'Alerta Pepino (Fungos)', `Umidade máxima atingiu ${fmtLoc(mu)}%. Condição para infestação de Oídio.`, 'Ativar exaustores ou manejo contínuo de cortinas. Realizar desfolha das saias.');
+                    if(mt >= 35) addAlert('🔥', 'Alerta Pepino (Calor Extremo)', `Picos de ${fmtLoc(mt)}°C afetam o pólen e causam abortamento.`, 'Acionar nebulização ou aspersão invertida. Garantir substrato úmido.', 'red');
+                    if(minT < 15 && minT !== Infinity) addAlert('❄️', 'Alerta Pepino (Frio)', `Mínima de ${fmtLoc(minT)}°C causa travamento do metabolismo.`, 'Fechar cortinas mais cedo para reter radiação térmica.', 'sky');
+                    if(mu > 88) addAlert('💧', 'Alerta Pepino (Fungos)', `Umidade máxima atingiu ${fmtLoc(mu)}%. Condição para infestação de Oídio.`, 'Ativar exaustores ou manejo contínuo de cortinas. Realizar desfolha das saias.', 'blue');
                 }
                 if (culturas.has('Fábrica de Ácaros')) {
-                    if(mu < 65 && mu !== Infinity) addAlert('🏜️', 'Alerta Ácaros (Seca letal)', `Umidade caiu para ${fmtLoc(mu)}%. Impede eclosão e eleva mortalidade.`, 'Acionar umidificadores e manter piso úmido nas instalações.');
-                    if(mt > 32) addAlert('🔥', 'Alerta Ácaros (Calor)', `Temperaturas (${fmtLoc(mt)}°C) induzem os ácaros à diapausa.`, 'Reforçar ventilação e reduzir densidade populacional por recipiente.');
+                    if(mu < 65 && mu !== Infinity) addAlert('🏜️', 'Alerta Ácaros (Seca letal)', `Umidade caiu para ${fmtLoc(mu)}%. Impede eclosão e eleva mortalidade.`, 'Acionar umidificadores e manter piso úmido nas instalações.', 'orange');
+                    if(mt > 32) addAlert('🔥', 'Alerta Ácaros (Calor)', `Temperaturas (${fmtLoc(mt)}°C) induzem os ácaros à diapausa.`, 'Reforçar ventilação e reduzir densidade populacional por recipiente.', 'red');
                 }
                 if (culturas.size === 0) {
-                    if(mt >= 35) addAlert('🔥', 'Estresse Térmico Severo', `Picos de ${fmtLoc(mt)}°C. Alto risco de abortamento floral.`, 'Aumentar ventilação e avaliar uso temporário de sombreamento.');
-                    if(mu > 88) addAlert('💧', 'Alerta Fúngico', `Umidade máxima de ${fmtLoc(mu)}%. Propício para doenças foliares.`, 'Evitar irrigações pesadas em horários de baixa luminosidade.');
+                    if(mt >= 35) addAlert('🔥', 'Estresse Térmico Severo', `Picos de ${fmtLoc(mt)}°C. Alto risco de abortamento floral.`, 'Aumentar ventilação e avaliar uso temporário de sombreamento.', 'red');
+                    if(mu > 88) addAlert('💧', 'Alerta Fúngico', `Umidade máxima de ${fmtLoc(mu)}%. Propício para doenças foliares.`, 'Evitar irrigações pesadas em horários de baixa luminosidade.', 'blue');
                 }
                 if (v !== '--') {
-                    if(v > 1.4) addAlert('🍂', 'VPD Elevado (Seca Atmosférica)', `(${fmtLoc(v, 2)} kPa) Ar muito seco, forçando fechamento estomático.`, 'A planta paralisou fotossíntese. Umidificar ambiente ou aumentar irrigação.');
-                    else if(v >= 0.8 && v <= 1.2 && !culturas.has('Fábrica de Ácaros')) addAlert('🌱', 'Transpiração Perfeita', `O VPD está na zona ideal.`, 'Plantas a transpirar em taxa máxima. Mantenha manejo nutricional otimizado.');
-                    else if(v < 0.4 && !culturas.has('Fábrica de Ácaros')) addAlert('💧', 'VPD Muito Baixo (Ar Saturado)', `(${fmtLoc(v, 2)} kPa) Ar saturado. Planta não consegue transpirar.`, 'Sem transpiração não há absorção (risco de Tipburn). Aquecer/ventilar urgente.');
+                    if(v > 1.4) addAlert('🍂', 'VPD Elevado (Seca Atmosférica)', `(${fmtLoc(v, 2)} kPa) Ar muito seco, forçando fechamento estomático.`, 'A planta paralisou fotossíntese. Umidificar ambiente ou aumentar irrigação.', 'orange');
+                    else if(v >= 0.8 && v <= 1.2 && !culturas.has('Fábrica de Ácaros')) addAlert('🌱', 'Transpiração Perfeita', `O VPD está na zona ideal.`, 'Plantas a transpirar em taxa máxima. Mantenha manejo nutricional otimizado.', 'emerald');
+                    else if(v < 0.4 && !culturas.has('Fábrica de Ácaros')) addAlert('💧', 'VPD Muito Baixo (Ar Saturado)', `(${fmtLoc(v, 2)} kPa) Ar saturado. Planta não consegue transpirar.`, 'Sem transpiração não há absorção (risco de Tipburn). Aquecer/ventilar urgente.', 'blue');
                 }
             }
-            
+
             if (metrica === 'TODAS' || metrica === 'LUZ') {
-                if(ml > 80) addAlert('☀️', 'Alerta de Radiação Externa', `Pico extremo (${fmtLoc(ml)} kLux).`, 'Risco de escaldadura. Fechar telas termorrefletoras nos horários críticos.');
+                if(ml > 80) addAlert('☀️', 'Alerta de Radiação Externa', `Pico extremo (${fmtLoc(ml)} kLux).`, 'Risco de escaldadura. Fechar telas termorrefletoras nos horários críticos.', 'amber');
             }
             if (metrica === 'TODAS' || metrica === 'CHUVA') {
-                if(sc > 100) addAlert('🌧️', 'Excesso Hídrico', `Acumulado severo de ${fmtLoc(sc)} mm no período.`, 'Inspecionar calhas e drenos. Em campo, focar em doenças de solo (Pythium).');
-                else if (sc === 0) addAlert('🏜️', 'Estiagem Absoluta', `Nenhuma gota de chuva registrada no período.`, 'Monitorar a EC no substrato/solo para evitar salinização por acúmulo de adubos.');
+                if(sc > 100) addAlert('🌧️', 'Excesso Hídrico', `Acumulado severo de ${fmtLoc(sc)} mm no período.`, 'Inspecionar calhas e drenos. Em campo, focar em doenças de solo (Pythium).', 'sky');
+                else if (sc === 0) addAlert('🏜️', 'Estiagem Absoluta', `Nenhuma gota de chuva registrada no período.`, 'Monitorar a EC no substrato/solo para evitar salinização por acúmulo de adubos.', 'orange');
             }
 
             const card = document.getElementById('dashInsightCard');
@@ -2282,12 +2350,14 @@
             const temAlertas = (culturaContext && alerts.length > 1) || (!culturaContext && alerts.length > 0);
             const insightText = document.getElementById('dashInsightText');
 
+            const okBox = (msg) => `<div class="col-span-full flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-3 text-[12px] text-emerald-700 font-bold"><i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i> ${msg}</div>`;
+
             if (temAlertas) {
                 if (insightText) insightText.innerHTML = alerts.join('');
                 card.classList.remove('hidden');
             } else {
-                let txt = culturaContext ? alerts.join('') + `<p class="text-emerald-300 font-bold mt-2"><i data-lucide="check-circle-2" class="inline w-4 h-4 mr-1"></i> Os parâmetros climáticos estão ideais para o desenvolvimento de ${culturaContext}.</p>` 
-                                         : `<p class="text-emerald-300 font-bold"><i data-lucide="check-circle-2" class="inline w-4 h-4 mr-1"></i> Parâmetros normais. Nenhum estresse detectado.</p>`;
+                let txt = culturaContext ? alerts.join('') + okBox(`Os parâmetros climáticos estão ideais para o desenvolvimento de ${culturaContext}.`)
+                                         : okBox('Parâmetros normais. Nenhum estresse detectado.');
                 if (insightText) insightText.innerHTML = txt;
                 card.classList.remove('hidden');
             }
@@ -2491,8 +2561,9 @@
                 
                 const metrica = metricaEl.value;
                 const modo = modoEl.value;
-                const monthVal = monthValEl.value; 
-                const selectedLocals = getSelectedLocals();
+                const monthVal = monthValEl.value;
+                const localEl = document.getElementById('tabLocal');
+                const localFiltro = localEl ? localEl.value : 'TODOS';
 
                 const tbody = document.getElementById('tbody-tabela');
                 if(!tbody) return;
@@ -2526,8 +2597,8 @@
                     
                     if (rY === yearStr && rM === monthStr) {
                         const rowLocal = row.local !== undefined && row.local !== null ? String(row.local).trim() : '';
-                        if (selectedLocals.length > 0 && !selectedLocals.includes('TODOS') && !selectedLocals.includes(rowLocal)) return;
-                        
+                        if (localFiltro !== 'TODOS' && rowLocal !== localFiltro) return;
+
                         const hVal = parseInt(row.hora);
                         if(isNaN(hVal) || hVal < 0 || hVal > 23) return;
 
