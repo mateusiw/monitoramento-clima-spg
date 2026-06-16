@@ -2195,19 +2195,19 @@
                             ]
                         },
                         options: {
-                            layout: { padding: { top: 20, bottom: 5, left: 0, right: 0 } },
+                            layout: { padding: { top: 28, bottom: 5, left: 0, right: 0 } },
                             responsive: true, maintainAspectRatio: false,
-                            plugins: { 
+                            plugins: {
                                 legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'line' } },
                                 tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.parsed.y !== null) { label += context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 1, maximumFractionDigits: 1}); } return label; } } },
-                                datalabels: { 
-                                    display: showDataLabels, clip: false, font: { weight: 'bold', size: 10 },
+                                datalabels: {
+                                    display: showDataLabels, clip: false, clamp: true, font: { weight: 'bold', size: 10 },
                                     formatter: (v, ctx) => {
                                         if(!v) return '';
                                         let dec = ctx.dataset.label.includes('VPD') ? 2 : 1;
                                         return Number(v).toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec});
                                     }
-                                } 
+                                }
                             },
                             scales: {
                                 x: { grid: { display: false } },
