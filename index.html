@@ -2195,7 +2195,7 @@
                             ]
                         },
                         options: {
-                            layout: { padding: { top: 28, bottom: 5, left: 0, right: 0 } },
+                            layout: { padding: { top: 16, bottom: 5, left: 0, right: 0 } },
                             responsive: true, maintainAspectRatio: false,
                             plugins: {
                                 legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'line' } },
@@ -2212,7 +2212,7 @@
                             scales: {
                                 x: { grid: { display: false } },
                                 yTemp: { type: 'linear', position: 'left', title: {display: true, text: '°C'}, grace: '20%', ticks: { callback: v => v.toLocaleString('pt-BR') } },
-                                yUmid: { type: 'linear', position: 'right', min: 0, max: 100, grid: {display: false}, title: {display: true, text: '%'}, ticks: { callback: v => v.toLocaleString('pt-BR') } }
+                                yUmid: { type: 'linear', position: 'right', min: 0, suggestedMax: 125, grid: {display: false}, title: {display: true, text: '%'}, ticks: { stepSize: 20, callback: v => v <= 100 ? v.toLocaleString('pt-BR') : '' } }
                             }
                         }
                     });
