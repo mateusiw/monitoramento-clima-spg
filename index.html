@@ -220,6 +220,27 @@
                     </div>
                 </div>
 
+                <!-- Atalho Rápido: Meses Atrás -->
+                <div class="flex flex-wrap items-end gap-3 px-4 py-3 bg-brand-50 border border-brand-200 rounded-2xl mb-6">
+                    <div class="flex items-center gap-2 text-brand-700 font-black text-xs uppercase tracking-widest mr-1">
+                        <i data-lucide="history" class="w-4 h-4"></i> Atalho Rápido
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Meses Atrás</label>
+                        <input type="number" id="dashMesesAtras" min="0" placeholder="Ex: 12" class="w-24 p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none text-slate-700 font-bold bg-white">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Alcance</label>
+                        <select id="dashMesesAtrasModo" class="p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                            <option value="ATE_HOJE" selected>Daquele mês até hoje</option>
+                            <option value="APENAS_MES">Somente aquele mês</option>
+                        </select>
+                    </div>
+                    <button type="button" onclick="aplicarMesesAtras()" class="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95">
+                        <i data-lucide="check" class="w-4 h-4"></i> Aplicar
+                    </button>
+                </div>
+
                 <!-- Filtros Secundários -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-white rounded-2xl border border-slate-200 mb-8 shadow-sm">
                     <div>
@@ -1315,9 +1336,35 @@
             document.getElementById('dashCharts').classList.remove('hidden');
         }
 
+        function aplicarMesesAtras() {
+            const n = parseInt(document.getElementById('dashMesesAtras').value, 10);
+            if (isNaN(n) || n < 0) {
+                alert('Informe um número de meses válido (ex: 2 ou 12).');
+                return;
+            }
+            const modo = document.getElementById('dashMesesAtrasModo').value;
+            const fmtLocal = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const hoje = new Date();
+            let inicio, fim;
+
+            if (modo === 'APENAS_MES') {
+                inicio = new Date(hoje.getFullYear(), hoje.getMonth() - n, 1);
+                fim = new Date(hoje.getFullYear(), hoje.getMonth() - n + 1, 0);
+            } else {
+                inicio = new Date(hoje.getFullYear(), hoje.getMonth() - n, hoje.getDate());
+                fim = hoje;
+            }
+
+            document.getElementById('dashDataInicio').value = fmtLocal(inicio);
+            document.getElementById('dashDataFim').value = fmtLocal(fim);
+            refreshCurrentView();
+        }
+
         function resetFilters() {
             document.getElementById('dashDataInicio').value = '';
             document.getElementById('dashDataFim').value = '';
+            document.getElementById('dashMesesAtras').value = '';
+            document.getElementById('dashMesesAtrasModo').value = 'ATE_HOJE';
             document.getElementById('dashMetrica').value = 'TODAS';
             document.getElementById('dashPeriodo').value = 'TODOS';
             document.getElementById('dashAparelho').value = 'TODOS';
