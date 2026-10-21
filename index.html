@@ -132,6 +132,7 @@
                 <div>
                     <h1 class="text-sm font-bold text-slate-800 leading-tight">SPG CLIMA</h1>
                     <p class="text-[10px] text-brand-600 font-bold uppercase tracking-wide">Monitoramento Ambiental</p>
+                    <p id="syncStatus" class="text-[10px] text-slate-400 font-medium leading-tight"></p>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -143,7 +144,7 @@
                     <i data-lucide="printer" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Imprimir A4</span>
                 </button>
-                <button type="button" onclick="loadDashboardData()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95">
+                <button type="button" onclick="loadDashboardData(true)" title="Baixa tudo de novo, inclusive as planilhas do Google" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95">
                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Sincronizar</span>
                 </button>
@@ -1300,40 +1301,167 @@
             });
         }
 
-        // --- 5. CARREGAMENTO DE DADOS E MOCK ---
-        async function loadDashboardData() {
-            document.getElementById('syncOverlay').classList.remove('hidden');
-            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzgTBTsaWDhsr6u50NTMJFKktjI1KNU747meTmwu83iG6uQzCVN1gdxmAPsK2XNKVx/exec"; 
-            const SCRIPT_URL_CHUVA = "https://script.google.com/macros/s/AKfycbxzx2qALorXht9744ivNjIaZQ-zw_qG3NJVLltTLrThACyjJkT-rGczhw-J1SMYdTadAg/exec";
+        // --- 5. CARREGAMENTO DE DADOS, CACHE LOCAL E MOCK ---
+        // Os dados ficam guardados no aparelho (IndexedDB). Ao abrir, a página mostra o cache na hora
+        // e atualiza em segundo plano:
+        //   - Sensores Smart Life (Supabase): só os dias mais recentes, a cada abertura (rápido).
+        //   - Planilhas do Google (lentas, ~30 s): só quando o cache tem mais de PLANILHAS_VALIDADE_MS
+        //     ou quando o botão "Sincronizar" é clicado.
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzgTBTsaWDhsr6u50NTMJFKktjI1KNU747meTmwu83iG6uQzCVN1gdxmAPsK2XNKVx/exec";
+        const SCRIPT_URL_CHUVA = "https://script.google.com/macros/s/AKfycbxzx2qALorXht9744ivNjIaZQ-zw_qG3NJVLltTLrThACyjJkT-rGczhw-J1SMYdTadAg/exec";
+        const SUPABASE_URL = "https://idusdstuprlglnheszoa.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_Hr1YOZWveu6s-9BtkpwDwA_UZxT9oC8";
+        const PLANILHAS_VALIDADE_MS = 6 * 60 * 60 * 1000;
+        const CACHE_DB = 'spg-clima', CACHE_STORE = 'cache', CACHE_CHAVE = 'dados-v1';
 
+        let sincronizando = false;
+
+        function abrirCacheDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(CACHE_DB, 1);
+                req.onupgradeneeded = () => req.result.createObjectStore(CACHE_STORE);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function lerCache() {
             try {
-                let errorOccurred = false;
-                const [clima, chuva] = await Promise.all([
-                    fetch(SCRIPT_URL + "?action=getClima").then(r => r.json()).catch((e) => { console.error("Erro no Clima:", e); errorOccurred = true; return []; }),
-                    fetch(SCRIPT_URL_CHUVA + "?action=getChuva").then(r => r.json()).catch((e) => { console.error("Erro na Chuva:", e); errorOccurred = true; return []; })
-                ]);
-                
-                const validClima = Array.isArray(clima) ? clima : [];
-                const validChuva = Array.isArray(chuva) ? chuva : [];
-                
-                rawClimateData = [...validClima, ...validChuva];
-                
-                if (errorOccurred && rawClimateData.length === 0) {
-                    console.error("Falha ao baixar dados de ambos os scripts.");
-                    rawClimateData = generateMockClimateData();
-                }
-
-                updateSmartDropdowns();
-                refreshCurrentView();
+                const db = await abrirCacheDB();
+                const dados = await new Promise((resolve, reject) => {
+                    const req = db.transaction(CACHE_STORE).objectStore(CACHE_STORE).get(CACHE_CHAVE);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => reject(req.error);
+                });
+                if (!dados || !Array.isArray(dados.clima) || !Array.isArray(dados.chuva) || !Array.isArray(dados.tuya)) return null;
+                return dados;
             } catch (e) {
-                console.error("Erro Fatal no carregamento:", e);
-                rawClimateData = generateMockClimateData();
-                updateSmartDropdowns();
-                refreshCurrentView();
+                console.warn("Cache local indisponível:", e);
+                return null;
             }
-            document.getElementById('syncOverlay').classList.add('hidden');
+        }
+
+        async function salvarCache(dados) {
+            try {
+                const db = await abrirCacheDB();
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(CACHE_STORE, 'readwrite');
+                    tx.objectStore(CACHE_STORE).put({ ...dados, salvoEm: Date.now() }, CACHE_CHAVE);
+                    tx.oncomplete = resolve;
+                    tx.onerror = () => reject(tx.error);
+                });
+            } catch (e) {
+                console.warn("Não foi possível salvar o cache local:", e);
+            }
+        }
+
+        // 'dd/mm/aaaa' (ou 'dd/mm/aaaa hh:mm') -> 'aaaa-mm-dd', para comparar datas como texto
+        function chaveDia(row) {
+            const p = String(row && row.data || '').split('/');
+            if (p.length < 3) return '';
+            return `${p[2].split(' ')[0]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+        }
+
+        function buscarJson(url, opcoes) {
+            return fetch(url, opcoes)
+                .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+                .then(d => { if (!Array.isArray(d)) throw new Error("resposta inválida"); return d; });
+        }
+
+        function setSyncStatus(txt) {
+            const el = document.getElementById('syncStatus');
+            if (el) el.innerText = txt;
+        }
+
+        function aplicarDados(dados) {
+            rawClimateData = [...dados.clima, ...dados.chuva, ...dados.tuya];
+            updateSmartDropdowns();
+            refreshCurrentView();
             document.getElementById('dashKPIs').classList.remove('hidden');
             document.getElementById('dashCharts').classList.remove('hidden');
+        }
+
+        async function loadDashboardData(forcar = false) {
+            if (sincronizando) return;
+            sincronizando = true;
+            const overlay = document.getElementById('syncOverlay');
+            const hora = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            try {
+                const cache = await lerCache();
+                const dados = cache || { clima: [], chuva: [], tuya: [], planilhasEm: 0 };
+
+                // 1) Mostra o que já está no aparelho, sem esperar a internet.
+                if (cache) {
+                    aplicarDados(dados);
+                    overlay.classList.add('hidden');
+                } else {
+                    overlay.classList.remove('hidden');
+                }
+                setSyncStatus('Atualizando…');
+                const falhas = [];
+
+                // 2) Smart Life: busca a partir do dia anterior ao último que já está no cache.
+                const ultimoDia = forcar ? '' : dados.tuya.reduce((max, r) => { const k = chaveDia(r); return k > max ? k : max; }, '');
+                let desde = '';
+                if (ultimoDia) {
+                    const d = new Date(ultimoDia + 'T12:00:00');
+                    d.setDate(d.getDate() - 1);
+                    desde = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                }
+                try {
+                    const novas = await buscarJson(SUPABASE_URL + "/rest/v1/rpc/clima_horario", {
+                        method: "POST",
+                        headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+                        body: JSON.stringify(desde ? { desde: desde + "T00:00:00-03:00" } : {})
+                    });
+                    dados.tuya = desde ? [...dados.tuya.filter(r => chaveDia(r) < desde), ...novas] : novas;
+                    if (cache) { aplicarDados(dados); await salvarCache(dados); }
+                } catch (e) {
+                    console.error("Erro nos sensores Smart Life:", e);
+                    falhas.push('Smart Life');
+                }
+
+                // 3) Planilhas do Google: lentas, então só quando o cache venceu ou no "Sincronizar".
+                const planilhasVencidas = forcar || !cache || (Date.now() - (dados.planilhasEm || 0) > PLANILHAS_VALIDADE_MS);
+                if (planilhasVencidas) {
+                    const [clima, chuva] = await Promise.all([
+                        buscarJson(SCRIPT_URL + "?action=getClima").catch(e => { console.error("Erro no Clima:", e); falhas.push('planilha de clima'); return null; }),
+                        buscarJson(SCRIPT_URL_CHUVA + "?action=getChuva").catch(e => { console.error("Erro na Chuva:", e); falhas.push('planilha de chuva'); return null; })
+                    ]);
+                    if (clima) dados.clima = clima;
+                    if (chuva) dados.chuva = chuva;
+                    if (clima && chuva) dados.planilhasEm = Date.now();
+                }
+
+                // 4) Renderiza e guarda. Sem cache e sem internet, cai nos dados de exemplo (como antes).
+                if (!dados.clima.length && !dados.chuva.length && !dados.tuya.length) {
+                    console.error("Falha ao baixar dados de todas as fontes.");
+                    rawClimateData = generateMockClimateData();
+                    updateSmartDropdowns();
+                    refreshCurrentView();
+                    document.getElementById('dashKPIs').classList.remove('hidden');
+                    document.getElementById('dashCharts').classList.remove('hidden');
+                    setSyncStatus('Sem conexão · dados de exemplo');
+                } else {
+                    aplicarDados(dados);
+                    await salvarCache(dados);
+                    setSyncStatus(falhas.length
+                        ? `⚠ Falhou: ${falhas.join(', ')} · usando dados salvos`
+                        : `Atualizado às ${hora()}`);
+                }
+            } catch (e) {
+                console.error("Erro Fatal no carregamento:", e);
+                if (!rawClimateData.length) {
+                    rawClimateData = generateMockClimateData();
+                    updateSmartDropdowns();
+                    refreshCurrentView();
+                }
+                setSyncStatus('⚠ Erro ao atualizar');
+            } finally {
+                overlay.classList.add('hidden');
+                sincronizando = false;
+            }
         }
 
         function aplicarMesesAtras() {
