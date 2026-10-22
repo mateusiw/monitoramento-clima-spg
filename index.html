@@ -361,6 +361,14 @@
                     </div>
                 </div>
 
+                <!-- Sensores Smart Life: bateria e última leitura -->
+                <div id="dashSensores" class="hidden bg-white border border-slate-200 p-4 rounded-2xl shadow-sm mb-6">
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i data-lucide="battery-medium" class="w-4 h-4"></i> Sensores Smart Life
+                    </h4>
+                    <div id="dashSensoresLista" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+                </div>
+
                 <!-- Insight Card Web -->
                 <div id="dashInsightCard" class="hidden bg-white border border-slate-200 p-5 sm:p-6 rounded-2xl shadow-sm mb-8 transition-all duration-500 relative overflow-hidden">
                     <div class="flex items-center gap-3 mb-5 relative z-10">
@@ -1381,6 +1389,55 @@
             document.getElementById('dashCharts').classList.remove('hidden');
         }
 
+        // Bateria e última leitura de cada sensor Smart Life (view "ultimas" no Supabase).
+        // Sensor sem bateria para de gravar, então a última leitura fica velha e aparece o aviso.
+        async function carregarSensores() {
+            const box = document.getElementById('dashSensores');
+            const lista = document.getElementById('dashSensoresLista');
+            let sensores;
+            try {
+                sensores = await buscarJson(SUPABASE_URL + "/rest/v1/ultimas?select=*&order=nome", { headers: { apikey: SUPABASE_KEY } });
+            } catch (e) {
+                console.error("Erro ao ler os sensores:", e);
+                return;
+            }
+            const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+            const quando = iso => {
+                const min = Math.round((Date.now() - new Date(iso)) / 60e3);
+                if (min < 1) return 'agora';
+                if (min < 60) return `há ${min} min`;
+                if (min < 48 * 60) return `há ${Math.round(min / 60)} h`;
+                return `há ${Math.round(min / 1440)} dias`;
+            };
+            const ESTADOS = { high: ['Alta', 80], middle: ['Média', 50], low: ['Baixa', 15] };
+
+            lista.innerHTML = sensores.map(s => {
+                const semSinal = Date.now() - new Date(s.lido_em) > 60 * 60e3;
+                let pct = null, txt = '—';
+                if (s.bateria != null) { pct = Number(s.bateria); txt = `${Math.round(pct)}%`; }
+                else if (s.bateria_estado) { const e = ESTADOS[s.bateria_estado]; txt = e ? e[0] : s.bateria_estado; pct = e ? e[1] : null; }
+                const cor = pct == null ? 'bg-slate-300' : pct <= 20 ? 'bg-red-500' : pct <= 40 ? 'bg-amber-500' : 'bg-emerald-500';
+                const corTxt = pct == null ? 'text-slate-500' : pct <= 20 ? 'text-red-600' : pct <= 40 ? 'text-amber-600' : 'text-emerald-600';
+                return `
+                    <div class="flex items-center gap-3 px-3 py-2 rounded-xl border ${semSinal ? 'border-red-200 bg-red-50' : 'border-slate-100 bg-slate-50'}">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold text-slate-700 truncate">${esc(s.nome)}</div>
+                            <div class="text-[10px] font-medium ${semSinal ? 'text-red-600' : 'text-slate-400'}">
+                                ${semSinal ? '⚠ Sem sinal (bateria?) · ' : ''}${s.temperatura != null ? Number(s.temperatura).toFixed(1) + '°C · ' : ''}${quando(s.lido_em)}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0" title="Bateria">
+                            <div class="relative w-7 h-3.5 rounded-[3px] border-2 border-slate-400 p-px">
+                                <div class="h-full rounded-[1px] ${cor}" style="width:${pct == null ? 0 : Math.max(5, Math.min(100, pct))}%"></div>
+                                <div class="absolute -right-[4px] top-1/2 -translate-y-1/2 w-[2px] h-1.5 bg-slate-400 rounded-r"></div>
+                            </div>
+                            <span class="text-[11px] font-black ${corTxt}">${esc(txt)}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+            box.classList.toggle('hidden', !sensores.length);
+        }
+
         async function loadDashboardData(forcar = false) {
             if (sincronizando) return;
             sincronizando = true;
@@ -1399,6 +1456,7 @@
                     overlay.classList.remove('hidden');
                 }
                 setSyncStatus('Atualizando…');
+                carregarSensores();
                 const falhas = [];
 
                 // 2) Smart Life: busca a partir do dia anterior ao último que já está no cache.
