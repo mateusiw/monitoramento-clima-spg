@@ -45,11 +45,9 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* Controlo de Abas */
-        body.tab-dash #view-tabela, body.tab-dash #view-detalhada, body.tab-dash #view-comparativo, body.tab-dash #view-paineis { display: none; }
-        body.tab-tabela #view-dashboard, body.tab-tabela #view-detalhada, body.tab-tabela #view-comparativo, body.tab-tabela #view-paineis { display: none; }
-        body.tab-detalhada #view-dashboard, body.tab-detalhada #view-tabela, body.tab-detalhada #view-comparativo, body.tab-detalhada #view-paineis { display: none; }
-        body.tab-compare #view-dashboard, body.tab-compare #view-tabela, body.tab-compare #view-detalhada, body.tab-compare #view-paineis { display: none; }
-        body.tab-paineis #view-dashboard, body.tab-paineis #view-tabela, body.tab-paineis #view-detalhada, body.tab-paineis #view-comparativo { display: none; }
+        /* Cada aba só aparece com a sua classe no body (tab-resumo, tab-dash...) */
+        body:not(.tab-resumo) #view-resumo, body:not(.tab-dash) #view-dashboard, body:not(.tab-tabela) #view-tabela,
+        body:not(.tab-detalhada) #view-detalhada, body:not(.tab-compare) #view-comparativo, body:not(.tab-paineis) #view-paineis { display: none; }
 
         /* REGRAS ESPECÍFICAS PARA IMPRESSÃO A4 PAISAGEM / RELATÓRIO TABULAR */
         @media print {
@@ -103,20 +101,139 @@
             #p_Diagnostico div:not(.insight-accent):not(.insight-badge) { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; }
 
             /* Ocultar áreas de impressão inativas */
-            body.tab-dash #printAreaTabela, body.tab-dash #printAreaDetalhada, body.tab-dash #printAreaComparativo, body.tab-dash #printAreaPaineis { display: none !important; }
-            body.tab-tabela #printAreaDashboard, body.tab-tabela #printAreaDetalhada, body.tab-tabela #printAreaComparativo, body.tab-tabela #printAreaPaineis { display: none !important; }
-            body.tab-detalhada #printAreaDashboard, body.tab-detalhada #printAreaTabela, body.tab-detalhada #printAreaComparativo, body.tab-detalhada #printAreaPaineis { display: none !important; }
-            body.tab-compare #printAreaDashboard, body.tab-compare #printAreaTabela, body.tab-compare #printAreaDetalhada, body.tab-compare #printAreaPaineis { display: none !important; }
-            body.tab-paineis #printAreaDashboard, body.tab-paineis #printAreaTabela, body.tab-paineis #printAreaDetalhada, body.tab-paineis #printAreaComparativo { display: none !important; }
+            body:not(.tab-resumo) #printAreaResumo, body:not(.tab-dash) #printAreaDashboard, body:not(.tab-tabela) #printAreaTabela,
+            body:not(.tab-detalhada) #printAreaDetalhada, body:not(.tab-compare) #printAreaComparativo, body:not(.tab-paineis) #printAreaPaineis { display: none !important; }
 
             #syncOverlay, .print\:hidden { display: none !important; }
         }
 
         .sticky-col { position: sticky; left: 0; z-index: 20; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .sticky-header { position: sticky; top: 0; z-index: 30; }
+
+        /* ===== MENUS DE ESCOLHA (substituem os <select> nativos; ver criarMenusModernos) ===== */
+        .dd-trigger { display: flex !important; align-items: center; justify-content: space-between; gap: .5rem; min-width: 0;
+            transition: border-color .15s, box-shadow .15s, background-color .15s; }
+        .dd-trigger:hover { border-color: #94a3b8; }
+        .dd-trigger[aria-expanded="true"] { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+        .dd-trigger:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.3); }
+        .dd-texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dd-seta { flex: none; width: 16px; height: 16px; opacity: .55; transition: transform .2s; }
+        .dd-trigger[aria-expanded="true"] .dd-seta { transform: rotate(180deg); }
+
+        .dd-painel { position: fixed; z-index: 95; background: rgba(255,255,255,.96);
+            -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid #e2e8f0; border-radius: 16px; padding: 6px;
+            box-shadow: 0 20px 40px -12px rgba(15,23,42,.25), 0 4px 10px rgba(15,23,42,.06);
+            display: flex; flex-direction: column; animation: ddEntrar .14s ease-out; font-family: inherit; }
+        @keyframes ddEntrar { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+        .dd-lista { overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 2px; }
+        .dd-grupo { padding: 8px 10px 4px; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: #94a3b8; }
+        .dd-opcao { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 10px;
+            font-size: 13px; font-weight: 600; color: #334155; background: transparent; border: 0; cursor: pointer; }
+        .dd-opcao:hover, .dd-opcao:focus-visible { background: #f1f5f9; outline: none; }
+        .dd-opcao[aria-selected="true"] { background: #eff6ff; color: #1d4ed8; font-weight: 800; }
+        .dd-opcao .dd-check { width: 16px; height: 16px; flex: none; color: #2563eb; visibility: hidden; }
+        .dd-opcao[aria-selected="true"] .dd-check { visibility: visible; }
+        .dd-opcao span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dd-busca { width: 100%; margin-bottom: 6px; padding: 8px 10px 8px 32px; border: 1px solid #e2e8f0; border-radius: 10px;
+            font-size: 13px; font-weight: 600; color: #334155; background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 10px center; }
+        .dd-busca:focus { outline: none; border-color: #3b82f6; background-color: #fff; }
+        .dd-vazio { padding: 14px; text-align: center; font-size: 12px; font-weight: 600; color: #94a3b8; }
+
+        /* Celular: o menu abre como uma folha que sobe do rodapé */
+        .dd-fundo { position: fixed; inset: 0; z-index: 94; background: rgba(15,23,42,.35); animation: ddFundo .18s ease-out; }
+        @keyframes ddFundo { from { opacity: 0; } }
+        .dd-painel.dd-folha { left: 0; right: 0; bottom: 0; top: auto; border-radius: 24px 24px 0 0; max-height: 75vh;
+            padding: 8px 12px calc(14px + env(safe-area-inset-bottom)); animation: ddSubir .26s cubic-bezier(.32,.72,0,1); }
+        @keyframes ddSubir { from { transform: translateY(100%); } }
+        .dd-folha .dd-alca { width: 40px; height: 4px; border-radius: 999px; background: #cbd5e1; margin: 2px auto 10px; }
+        .dd-folha .dd-titulo { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; font-size: 14px; font-weight: 900; color: #1e293b; }
+        .dd-folha .dd-fechar { padding: 6px; border-radius: 10px; color: #64748b; background: #f1f5f9; border: 0; }
+        .dd-folha .dd-opcao { padding: 13px 12px; font-size: 14px; }
+
+        /* ===== CABEÇALHO: vidro claro com um fio de cor no topo ===== */
+        #navbar {
+            background: rgba(255,255,255,0.78);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            backdrop-filter: blur(18px) saturate(180%);
+            border-bottom: 1px solid rgba(226,232,240,0.9);
+            box-shadow: 0 6px 24px -18px rgba(15,23,42,0.35);
+        }
+        #navbar::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; pointer-events: none;
+            background: linear-gradient(90deg, #0ea5e9, #3b82f6 45%, #6366f1 80%, #8b5cf6);
+        }
+
+        /* ===== BARRA DE ABAS NO CELULAR (estilo "liquid glass" do iOS) =====
+           Flutua no rodapé; ao rolar a página para baixo recolhe num botão
+           redondo que leva de volta ao topo. */
+        #tabBarTopo { display: none; }
+        @media (max-width: 639px) {
+            body { padding-bottom: calc(110px + env(safe-area-inset-bottom)) !important; }
+            #tabBarWrap { pointer-events: none; background: transparent; }
+            #tabBar {
+                pointer-events: auto;
+                position: fixed; z-index: 50;
+                left: max(12px, calc((100% - 460px) / 2));
+                bottom: calc(12px + env(safe-area-inset-bottom));
+                width: min(calc(100% - 24px), 460px); height: 64px;
+                margin: 0 !important; padding: 5px !important; gap: 2px; overflow: hidden !important;
+                border-radius: 999px !important;
+                background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.42));
+                -webkit-backdrop-filter: blur(22px) saturate(190%);
+                backdrop-filter: blur(22px) saturate(190%);
+                border: 1px solid rgba(255,255,255,0.65) !important;
+                box-shadow: 0 10px 30px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08),
+                            inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -1px 1px rgba(255,255,255,0.35) !important;
+                transition: width 0.42s cubic-bezier(0.32, 0.72, 0, 1), height 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+                            transform 0.3s ease, opacity 0.3s ease;
+            }
+            /* Reflexo de vidro no topo da barra */
+            #tabBar::before {
+                content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+                background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 45%);
+                opacity: 0.6;
+            }
+            #tabBar > button:not(#tabBarTopo) {
+                position: relative; flex: 1 1 auto; min-width: 0; padding: 4px 6px !important;
+                gap: 3px !important; border-radius: 999px !important;
+                font-size: 10px !important; font-weight: 700; letter-spacing: -0.02em;
+                color: #475569 !important; background: transparent !important; box-shadow: none !important;
+                transition: opacity 0.18s ease, transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+            }
+            #tabBar > button:not(#tabBarTopo):active { transform: scale(0.92); }
+            #tabBar > button svg { width: 21px; height: 21px; }
+
+            /* Aba ativa (switchTab marca com bg-brand-600): pílula translúcida azul */
+            #tabBar > button.bg-brand-600:not(#tabBarTopo) {
+                color: rgb(37, 99, 235) !important; font-weight: 800;
+                background: rgba(37, 99, 235, 0.14) !important;
+                box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255,255,255,0.7),
+                            0 3px 10px rgba(37, 99, 235, 0.18) !important;
+            }
+            #tabBar > button.bg-brand-600:not(#tabBarTopo) svg { stroke-width: 2.4; }
+
+            /* Botão "voltar ao topo" (só aparece com a barra recolhida) */
+            #tabBarTopo {
+                display: flex; align-items: center; justify-content: center;
+                position: absolute; left: 0; top: 0; width: 52px; height: 52px;
+                border-radius: 999px; color: #0f172a;
+                opacity: 0; pointer-events: none; transform: scale(0.6);
+                transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+            }
+            #tabBarTopo svg { width: 22px; height: 22px; }
+
+            #tabBar.recolhida { width: 52px; height: 52px; }
+            #tabBar.recolhida > button:not(#tabBarTopo) { opacity: 0; transform: scale(0.7); pointer-events: none; }
+            #tabBar.recolhida #tabBarTopo { opacity: 1; pointer-events: auto; transform: scale(1); transition-delay: 0.08s; }
+            #tabBar.recolhida #tabBarTopo:active { transform: scale(0.9); }
+
+            /* Teclado aberto: a barra sai da frente dos campos */
+            #tabBar.teclado { transform: translateY(160%); opacity: 0; pointer-events: none; }
+        }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen pb-24 sm:pb-10 select-none relative tab-dash">
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-24 sm:pb-10 select-none relative tab-resumo">
 
     <!-- ========================================================================= -->
     <!-- ÁREA WEB (Oculta na impressão com print:hidden)                           -->
@@ -124,7 +241,7 @@
     <div class="print:hidden">
         
         <!-- NAVBAR -->
-        <div class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm sticky top-0 z-40">
+        <div id="navbar" class="px-4 py-3 flex justify-between items-center sticky top-0 z-40">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-lg shadow-sm border border-slate-100 bg-brand-50 flex items-center justify-center overflow-hidden">
                     <i data-lucide="cloud-sun" class="w-7 h-7 text-brand-600"></i>
@@ -152,9 +269,13 @@
         </div>
 
         <!-- SELECTOR DE ABAS (barra fixa no rodapé em mobile, pill no topo em telas maiores) -->
-        <div class="fixed sm:static inset-x-0 bottom-0 z-50 sm:z-auto flex justify-center sm:mt-6 px-0 sm:px-2">
-            <div class="bg-white w-full sm:w-auto p-1 sm:p-1.5 rounded-none sm:rounded-xl shadow-[0_-4px_16px_rgba(0,0,0,0.08)] sm:shadow-sm border-t sm:border border-slate-200 flex sm:flex-wrap sm:justify-center gap-1 sm:gap-2 mx-0 sm:mx-4 max-w-full overflow-x-auto hide-scrollbar pb-[env(safe-area-inset-bottom)] sm:pb-1.5">
-                <button onclick="switchTab('DASH')" id="btnTabDash" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-brand-600 text-white shadow-sm transition-all whitespace-nowrap">
+        <div id="tabBarWrap" class="fixed sm:static inset-x-0 bottom-0 z-50 sm:z-auto flex justify-center sm:mt-6 px-0 sm:px-2">
+            <div id="tabBar" class="relative bg-white w-full sm:w-auto p-1 sm:p-1.5 rounded-none sm:rounded-xl shadow-[0_-4px_16px_rgba(0,0,0,0.08)] sm:shadow-sm border-t sm:border border-slate-200 flex sm:flex-wrap sm:justify-center gap-1 sm:gap-2 mx-0 sm:mx-4 max-w-full overflow-x-auto hide-scrollbar pb-[env(safe-area-inset-bottom)] sm:pb-1.5">
+                <button onclick="switchTab('RESUMO')" id="btnTabResumo" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-brand-600 text-white shadow-sm transition-all whitespace-nowrap">
+                    <i data-lucide="gauge" class="w-5 h-5 sm:w-4 sm:h-4"></i>
+                    <span>Resumo</span>
+                </button>
+                <button onclick="switchTab('DASH')" id="btnTabDash" class="flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap">
                     <i data-lucide="bar-chart-2" class="w-5 h-5 sm:w-4 sm:h-4"></i>
                     <span class="sm:hidden">Painel</span><span class="hidden sm:inline">Painel Gráfico</span>
                 </button>
@@ -174,6 +295,91 @@
                     <i data-lucide="layout-dashboard" class="w-5 h-5 sm:w-4 sm:h-4"></i>
                     <span class="sm:hidden">Painéis</span><span class="hidden sm:inline">Painéis Lado a Lado</span>
                 </button>
+                <!-- Celular: com a barra recolhida, sobra só este botão para voltar ao topo -->
+                <button type="button" id="tabBarTopo" onclick="voltarAoTopo()" title="Voltar ao topo" aria-label="Voltar ao topo">
+                    <i data-lucide="arrow-up"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- ABA: RESUMO (temperatura e umidade num olhar: média, pico e mínima)       -->
+        <!-- ========================================================================= -->
+        <div id="view-resumo" class="container mx-auto p-4 mt-2 transition-opacity duration-300">
+            <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 mb-6">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-5">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <i data-lucide="gauge" class="text-brand-500"></i> Resumo do Clima
+                        </h2>
+                        <p id="resInfo" class="text-[11px] font-bold text-slate-400 mt-1"></p>
+                    </div>
+                    <!-- Filtros: no celular o período ocupa a linha toda e os dois menus ficam lado a lado embaixo -->
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
+                        <div id="resPeriodos" class="grid grid-cols-4 sm:flex bg-slate-100 rounded-xl p-1 gap-1 shrink-0">
+                            <button type="button" data-res-dias="1" onclick="escolherPeriodoResumo(1)" class="px-3 py-1.5 rounded-lg text-xs font-bold">1 dia</button>
+                            <button type="button" data-res-dias="7" onclick="escolherPeriodoResumo(7)" class="px-3 py-1.5 rounded-lg text-xs font-bold">7 dias</button>
+                            <button type="button" data-res-dias="15" onclick="escolherPeriodoResumo(15)" class="px-3 py-1.5 rounded-lg text-xs font-bold">15 dias</button>
+                            <button type="button" data-res-dias="30" onclick="escolherPeriodoResumo(30)" class="px-3 py-1.5 rounded-lg text-xs font-bold">30 dias</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 w-full sm:flex-1 lg:flex-none lg:w-auto">
+                            <select id="resAparelho" onchange="generateResumo()" aria-label="Aparelho" class="w-full lg:w-44 min-w-0 px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                                <option value="Smart Life">Smart Life</option>
+                            </select>
+                            <select id="resLocal" onchange="generateResumo()" aria-label="Local" class="w-full lg:w-48 min-w-0 px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-700 bg-white cursor-pointer">
+                                <option value="TODOS">Todos os Locais</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="resVazio" class="hidden text-center py-12 text-sm font-bold text-slate-400">Sem leituras de temperatura ou umidade para esse filtro.</div>
+
+                <div id="resConteudo" class="space-y-6">
+                    <!-- ASSISTENTE DE MANEJO (offline: regras calculadas no aparelho) -->
+                    <!-- Fica fechado; abre ao tocar em "Sugestão de Manejo" -->
+                    <div id="resAssistente" class="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white">
+                        <button type="button" onclick="alternarSugestao()" aria-expanded="false" aria-controls="resAssistenteCorpo" id="resAssistenteBtn"
+                            class="w-full flex items-center gap-3 p-4 sm:px-5 text-left rounded-2xl hover:bg-brand-50/60 transition-colors">
+                            <div class="bg-white p-2.5 rounded-xl text-brand-600 shrink-0 border border-brand-100 shadow-sm">
+                                <i data-lucide="sprout" class="w-5 h-5"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 flex-wrap">
+                                    Sugestão de Manejo
+                                    <span id="resAssistenteSelo" class="hidden text-[9px] font-black px-2 py-0.5 rounded-full"></span>
+                                </h3>
+                                <p id="resAssistenteSub" class="text-[11px] text-slate-500 font-medium mt-0.5">Toque para ver as sugestões de irrigação do período</p>
+                            </div>
+                            <span id="resAssistenteSeta" class="shrink-0 text-brand-600 transition-transform"><i data-lucide="chevron-down" class="w-5 h-5"></i></span>
+                        </button>
+                        <div id="resAssistenteCorpo" class="hidden px-4 pb-4 sm:px-5 sm:pb-5">
+                            <div id="resAssistenteLista" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- TEMPERATURA -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <i data-lucide="thermometer" class="w-4 h-4 text-red-500"></i> Temperatura
+                        </h3>
+                        <div id="resCardsTemp" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3"></div>
+                        <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="relative h-[260px] sm:h-[340px] w-full"><canvas id="chartResTemp"></canvas></div>
+                        </div>
+                    </div>
+                    <!-- UMIDADE -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <i data-lucide="droplets" class="w-4 h-4 text-blue-500"></i> Umidade Relativa
+                        </h3>
+                        <div id="resCardsUmid" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3"></div>
+                        <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="relative h-[260px] sm:h-[340px] w-full"><canvas id="chartResUmid"></canvas></div>
+                        </div>
+                    </div>
+                    <p id="resNota" class="text-[10px] font-medium text-slate-400 leading-relaxed"></p>
+                </div>
             </div>
         </div>
 
@@ -865,6 +1071,25 @@
         </div>
     </div>
 
+    <!-- IMPRESSÃO DO RESUMO -->
+    <div id="printAreaResumo" class="hidden print:block w-full bg-white text-slate-800 p-0 m-0 font-sans">
+        <h1 class="text-xl font-black uppercase text-center mb-1 border-b-2 border-brand-600 pb-2 text-slate-800">Resumo Climático</h1>
+        <div class="flex justify-between text-[10px] font-bold uppercase mb-4 mt-2 text-slate-600">
+            <span id="pr_Info">--</span>
+            <span>Emissão: <span id="pr_Data">--</span></span>
+        </div>
+        <div class="mb-3 print-avoid-break">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-200 pb-1">Sugestão de Manejo</h3>
+            <div id="pr_Assistente" class="grid grid-cols-2 gap-2"></div>
+        </div>
+        <div id="pr_CardsTemp" class="grid grid-cols-4 gap-2 mb-3"></div>
+        <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Temperatura</span><img id="pr_ImgTemp" class="print-chart-img"></div>
+        <div class="page-break-before">
+            <div id="pr_CardsUmid" class="grid grid-cols-4 gap-2 mb-3"></div>
+            <div class="print-chart-wrapper"><span class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Umidade Relativa</span><img id="pr_ImgUmid" class="print-chart-img"></div>
+        </div>
+    </div>
+
     <!-- IMPRESSÃO DA TABELA -->
     <div id="printAreaTabela" class="hidden print:block w-full bg-white text-black p-0 m-0">
         <h1 class="text-xl font-black uppercase text-center mb-1 border-b-2 border-brand-600 pb-2 text-slate-800" id="pt_Titulo">Relatório Tabular de Clima</h1>
@@ -942,7 +1167,7 @@
         let chartPainel1Inst = null, chartPainel2Inst = null;
         
         let showDataLabels = false;
-        let currentTab = 'DASH';
+        let currentTab = 'RESUMO'; // aba que abre primeiro
 
         const hasData = (val) => val !== undefined && val !== null && String(val).trim() !== '';
         
@@ -1022,9 +1247,213 @@
             });
         });
 
+        // --- BARRA DE ABAS NO CELULAR: recolhe ao rolar para baixo, volta ao rolar para cima ---
+        {
+            const barra = document.getElementById('tabBar');
+            const celular = window.matchMedia('(max-width: 639px)');
+            let ultimoY = window.scrollY;
+            let agendado = false;
+
+            const recolher = (sim) => barra.classList.toggle('recolhida', sim && celular.matches);
+
+            window.addEventListener('scroll', () => {
+                if (agendado) return;
+                agendado = true;
+                requestAnimationFrame(() => {
+                    agendado = false;
+                    const y = window.scrollY;
+                    const delta = y - ultimoY;
+                    if (y < 80) recolher(false);
+                    else if (delta > 8) recolher(true);
+                    else if (delta < -8) recolher(false);
+                    if (Math.abs(delta) > 8 || y < 80) ultimoY = y;
+                });
+            }, { passive: true });
+
+            window.voltarAoTopo = function() {
+                recolher(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            // Teclado aberto: esconde a barra para não cobrir os campos
+            const ehCampo = (el) => el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select');
+            document.addEventListener('focusin', (e) => { if (ehCampo(e.target)) barra.classList.add('teclado'); });
+            document.addEventListener('focusout', (e) => { if (ehCampo(e.target)) barra.classList.remove('teclado'); });
+
+            celular.addEventListener('change', () => { if (!celular.matches) barra.classList.remove('recolhida', 'teclado'); });
+        }
+
+        // --- MENUS DE ESCOLHA MODERNOS ---
+        // Cada <select> da tela ganha um botão e uma lista própria. O <select> continua na página
+        // (escondido) guardando o valor e disparando o onchange, então o resto do código não muda.
+        // No computador abre logo abaixo do botão; no celular sobe como uma folha do rodapé.
+        (function criarMenusModernos() {
+            const SETA = `<svg class="dd-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+            const CHECK = `<svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+            const FECHAR = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`;
+            const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+            const celular = window.matchMedia('(max-width: 639px)');
+            let aberto = null; // { sel, botao, painel, fundo }
+
+            // Valor trocado pelo código (sel.value = ...) também atualiza o botão
+            ['value', 'selectedIndex'].forEach(prop => {
+                const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, prop);
+                Object.defineProperty(HTMLSelectElement.prototype, prop, {
+                    configurable: true, get() { return d.get.call(this); },
+                    set(v) { d.set.call(this, v); if (this._ddAtualizar) this._ddAtualizar(); }
+                });
+            });
+
+            function tituloDo(sel) {
+                const rotulo = sel.getAttribute('aria-label') || (sel.parentElement && sel.parentElement.querySelector('label')?.innerText);
+                return (rotulo || 'Escolha uma opção').trim();
+            }
+
+            function fechar() {
+                if (!aberto) return;
+                aberto.painel.remove();
+                if (aberto.fundo) aberto.fundo.remove();
+                aberto.botao.setAttribute('aria-expanded', 'false');
+                aberto = null;
+            }
+
+            function escolher(sel, valor) {
+                fechar();
+                if (sel.value === valor) return;
+                sel.value = valor;
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            function abrir(sel, botao) {
+                if (aberto && aberto.sel === sel) { fechar(); return; }
+                fechar();
+                const folha = celular.matches;
+                const opcoes = [...sel.options];
+                const comBusca = opcoes.length > 8;
+
+                const painel = document.createElement('div');
+                painel.className = 'dd-painel' + (folha ? ' dd-folha' : '');
+                painel.setAttribute('role', 'listbox');
+                let html = folha ? `<div class="dd-alca"></div><div class="dd-titulo"><span>${esc(tituloDo(sel))}</span><button type="button" class="dd-fechar" aria-label="Fechar">${FECHAR}</button></div>` : '';
+                if (comBusca) html += `<input type="search" class="dd-busca" placeholder="Buscar..." autocomplete="off">`;
+                html += `<div class="dd-lista">`;
+                let grupoAtual = null;
+                opcoes.forEach(o => {
+                    const grupo = o.parentElement.tagName === 'OPTGROUP' ? o.parentElement.label : null;
+                    if (grupo && grupo !== grupoAtual) html += `<div class="dd-grupo">${esc(grupo)}</div>`;
+                    grupoAtual = grupo;
+                    html += `<button type="button" class="dd-opcao" role="option" data-valor="${esc(o.value)}" aria-selected="${o.value === sel.value}">${CHECK}<span>${esc(o.text)}</span></button>`;
+                });
+                html += `</div><div class="dd-vazio" hidden>Nada encontrado</div>`;
+                painel.innerHTML = html;
+
+                let fundo = null;
+                if (folha) {
+                    fundo = document.createElement('div');
+                    fundo.className = 'dd-fundo';
+                    fundo.addEventListener('click', fechar);
+                    document.body.appendChild(fundo);
+                }
+                document.body.appendChild(painel);
+
+                // Posição no computador: abaixo do botão (ou acima, se não couber)
+                if (!folha) {
+                    const r = botao.getBoundingClientRect();
+                    const largura = Math.max(r.width, 220);
+                    const abaixo = window.innerHeight - r.bottom - 12, acima = r.top - 12;
+                    const paraCima = abaixo < 240 && acima > abaixo;
+                    const alturaMax = Math.min(360, paraCima ? acima : abaixo);
+                    painel.style.width = largura + 'px';
+                    painel.style.left = Math.max(8, Math.min(r.left, window.innerWidth - largura - 8)) + 'px';
+                    painel.style.maxHeight = alturaMax + 'px';
+                    if (paraCima) painel.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+                    else painel.style.top = (r.bottom + 6) + 'px';
+                }
+
+                painel.addEventListener('click', e => {
+                    const op = e.target.closest('.dd-opcao');
+                    if (op) escolher(sel, op.dataset.valor);
+                    else if (e.target.closest('.dd-fechar')) fechar();
+                });
+
+                // Setas do teclado entre as opções
+                painel.addEventListener('keydown', e => {
+                    if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+                    e.preventDefault();
+                    const visiveis = [...painel.querySelectorAll('.dd-opcao')].filter(b => !b.hidden);
+                    const i = visiveis.indexOf(document.activeElement);
+                    const prox = e.key === 'ArrowDown' ? visiveis[Math.min(visiveis.length - 1, i + 1)] : visiveis[Math.max(0, i - 1)];
+                    if (prox) prox.focus();
+                });
+
+                const busca = painel.querySelector('.dd-busca');
+                if (busca) {
+                    const semAcento = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+                    busca.addEventListener('input', () => {
+                        const q = semAcento(busca.value.trim());
+                        let algum = false;
+                        painel.querySelectorAll('.dd-opcao').forEach(b => {
+                            b.hidden = !!q && !semAcento(b.innerText).includes(q);
+                            if (!b.hidden) algum = true;
+                        });
+                        painel.querySelectorAll('.dd-grupo').forEach(g => g.hidden = !!q);
+                        painel.querySelector('.dd-vazio').hidden = algum;
+                    });
+                    if (!folha) busca.focus();
+                }
+
+                const atual = painel.querySelector('.dd-opcao[aria-selected="true"]');
+                if (atual) atual.scrollIntoView({ block: 'nearest' });
+                if (!busca && !folha && atual) atual.focus({ preventScroll: true });
+
+                botao.setAttribute('aria-expanded', 'true');
+                aberto = { sel, botao, painel, fundo };
+            }
+
+            function melhorar(sel) {
+                if (sel._ddAtualizar) return;
+                const botao = document.createElement('button');
+                botao.type = 'button';
+                botao.className = sel.className + ' dd-trigger';
+                botao.setAttribute('aria-haspopup', 'listbox');
+                botao.setAttribute('aria-expanded', 'false');
+                botao.setAttribute('aria-label', tituloDo(sel));
+                botao.innerHTML = `<span class="dd-texto"></span>${SETA}`;
+                sel.style.display = 'none';
+                sel.insertAdjacentElement('afterend', botao);
+
+                sel._ddAtualizar = () => {
+                    const o = sel.options[sel.selectedIndex];
+                    botao.querySelector('.dd-texto').textContent = o ? o.text : '—';
+                };
+                sel._ddAtualizar();
+                // As opções são refeitas pelo código (innerHTML): atualiza o texto do botão
+                new MutationObserver(() => sel._ddAtualizar()).observe(sel, { childList: true, subtree: true });
+                botao.addEventListener('click', () => abrir(sel, botao));
+                botao.addEventListener('keydown', e => {
+                    if (['ArrowDown', 'ArrowUp'].includes(e.key)) { e.preventDefault(); abrir(sel, botao); }
+                });
+            }
+
+            document.querySelectorAll('select').forEach(melhorar);
+
+            // Fecha ao tocar fora, apertar Esc, rolar a página ou mudar o tamanho da tela
+            document.addEventListener('mousedown', e => {
+                if (aberto && !aberto.painel.contains(e.target) && !aberto.botao.contains(e.target)) fechar();
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && aberto) { const b = aberto.botao; fechar(); b.focus(); }
+            });
+            window.addEventListener('scroll', e => {
+                if (aberto && !aberto.fundo && !aberto.painel.contains(e.target)) fechar();
+            }, true);
+            window.addEventListener('resize', () => { if (aberto && !aberto.fundo) fechar(); });
+        })();
+
         // --- 2. NAVEGAÇÃO E ABA ATIVA ---
         function switchTab(tab) {
             currentTab = tab;
+            const bRes = document.getElementById('btnTabResumo');
             const bDash = document.getElementById('btnTabDash');
             const bTab = document.getElementById('btnTabTable');
             const bDet = document.getElementById('btnTabDetalhada');
@@ -1034,24 +1463,444 @@
             const activeClass = "flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-brand-600 text-white shadow-sm transition-all whitespace-nowrap";
             const inactiveClass = "flex-1 sm:flex-initial shrink-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1 sm:px-5 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-bold bg-transparent text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap";
 
+            bRes.className = tab === 'RESUMO' ? activeClass : inactiveClass;
             bDash.className = tab === 'DASH' ? activeClass : inactiveClass;
             bTab.className = tab === 'TABELA' ? activeClass : inactiveClass;
             bDet.className = tab === 'DETALHADA' ? activeClass : inactiveClass;
             bComp.className = tab === 'COMPARE' ? activeClass : inactiveClass;
             bPan.className = tab === 'PAINEIS' ? activeClass : inactiveClass;
 
-            document.body.classList.remove('tab-dash', 'tab-tabela', 'tab-detalhada', 'tab-compare', 'tab-paineis');
+            document.body.classList.remove('tab-resumo', 'tab-dash', 'tab-tabela', 'tab-detalhada', 'tab-compare', 'tab-paineis');
             document.body.classList.add('tab-' + tab.toLowerCase());
 
             refreshCurrentView();
         }
 
         function refreshCurrentView() {
-            if (currentTab === 'DASH') filterDashboard();
+            if (currentTab === 'RESUMO') generateResumo();
+            else if (currentTab === 'DASH') filterDashboard();
             else if (currentTab === 'TABELA') generateTable();
             else if (currentTab === 'DETALHADA') { updateYearsDropdowns(); generateDetailedAnalysis(); }
             else if (currentTab === 'COMPARE') { updateYearsDropdowns(); generateComparativo(); }
             else if (currentTab === 'PAINEIS') { updateYearsDropdowns(); generatePaineis(); }
+        }
+
+        // --- ABA RESUMO: temperatura e umidade num olhar (média, pico e mínima, com quando e onde) ---
+        let resumoDias = 7;
+        let chartResTempInst = null, chartResUmidInst = null;
+
+        function escolherPeriodoResumo(dias) {
+            resumoDias = dias;
+            generateResumo();
+        }
+
+        // 'aaaa-mm-dd' + n dias
+        function somarDias(iso, n) {
+            const d = new Date(iso + 'T12:00:00');
+            d.setDate(d.getDate() + n);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        // 'aaaa-mm-dd', hora -> "qua, 29/10 às 14h"
+        function quandoResumo(dia, h) {
+            const semana = new Date(dia + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+            const [, m, d] = dia.split('-');
+            return `${semana}, ${d}/${m} às ${String(h).padStart(2, '0')}h`;
+        }
+
+        function generateResumo() {
+            const conteudo = document.getElementById('resConteudo');
+            const vazio = document.getElementById('resVazio');
+            if (!conteudo || !rawClimateData || rawClimateData.length === 0) return;
+
+            document.querySelectorAll('[data-res-dias]').forEach(b => {
+                const ativo = Number(b.dataset.resDias) === resumoDias;
+                b.className = `px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${ativo ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
+            });
+
+            const num = v => hasData(v) ? parseFloat(String(v).replace(',', '.')) : NaN;
+            const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+            // Aparelhos que têm temperatura ou umidade (começa no Smart Life, se houver dados dele)
+            const comTermo = rawClimateData.filter(r => r && (hasData(r.temperatura) || hasData(r.umidade)));
+            const selAp = document.getElementById('resAparelho');
+            const aparelhos = [...new Set(comTermo.map(r => String(r.aparelho ?? '').trim()).filter(Boolean))].sort();
+            const apAtual = selAp.value;
+            selAp.innerHTML = `<option value="TODOS">Todos os Aparelhos</option>` + aparelhos.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('');
+            selAp.value = aparelhos.includes(apAtual) ? apAtual : 'TODOS';
+            const aparelho = selAp.value;
+            const doAparelho = r => aparelho === 'TODOS' || String(r.aparelho ?? '').trim() === aparelho;
+
+            // Locais que têm temperatura ou umidade nesse aparelho
+            const sel = document.getElementById('resLocal');
+            const locais = [...new Set(comTermo.filter(doAparelho)
+                .map(r => String(r.local ?? '').trim()).filter(Boolean))].sort();
+            const atual = sel.value;
+            sel.innerHTML = `<option value="TODOS">Todos os Locais</option>` + locais.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
+            sel.value = locais.includes(atual) ? atual : 'TODOS';
+            const local = sel.value;
+
+            // Leituras horárias do local escolhido
+            const leituras = [];
+            rawClimateData.forEach(r => {
+                if (!r || !r.data) return;
+                const p = String(r.data).split('/');
+                if (p.length < 3) return;
+                const loc = String(r.local ?? '').trim();
+                if (local !== 'TODOS' && loc !== local) return;
+                if (!doAparelho(r)) return;
+                const h = parseInt(r.hora);
+                if (isNaN(h) || h < 0 || h > 23) return;
+                const t = num(r.temperatura), u = num(r.umidade);
+                if (isNaN(t) && isNaN(u)) return;
+                const dia = `${p[2].split(' ')[0]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+                leituras.push({ dia, h, chave: `${dia} ${String(h).padStart(2, '0')}`, loc, t, u });
+            });
+
+            if (!leituras.length) {
+                conteudo.classList.add('hidden'); vazio.classList.remove('hidden');
+                document.getElementById('resInfo').innerText = '';
+                return;
+            }
+
+            // Período: os últimos N dias até o último dia com leitura
+            const ultimoDia = leituras.reduce((m, l) => l.dia > m ? l.dia : m, '');
+            const inicio = somarDias(ultimoDia, -(resumoDias - 1));
+            const antInicio = somarDias(inicio, -resumoDias), antFim = somarDias(inicio, -1);
+            const doPeriodo = leituras.filter(l => l.dia >= inicio && l.dia <= ultimoDia);
+            const doAnterior = leituras.filter(l => l.dia >= antInicio && l.dia <= antFim);
+
+            conteudo.classList.remove('hidden'); vazio.classList.add('hidden');
+            const fmtDia = iso => iso.split('-').reverse().slice(0, 2).join('/');
+            const textoPeriodo = resumoDias === 1 ? fmtDia(ultimoDia) : `${fmtDia(inicio)} a ${fmtDia(ultimoDia)}`;
+            document.getElementById('resInfo').innerText =
+                `${textoPeriodo} · ${aparelho === 'TODOS' ? 'Todos os aparelhos' : aparelho} · ${local === 'TODOS' ? 'Todos os locais' : local} · ${doPeriodo.length.toLocaleString('pt-BR')} leituras`;
+
+            // Série por hora (média das leituras daquela hora) e eixo X
+            const porHora = {};
+            doPeriodo.forEach(l => {
+                const g = porHora[l.chave] = porHora[l.chave] || { t: [], u: [], dia: l.dia, h: l.h };
+                if (!isNaN(l.t)) g.t.push(l.t);
+                if (!isNaN(l.u)) g.u.push(l.u);
+            });
+            const chaves = Object.keys(porHora).sort();
+            const labels = chaves.map(k => {
+                const g = porHora[k];
+                const hh = String(g.h).padStart(2, '0') + 'h';
+                return resumoDias === 1 ? hh : `${fmtDia(g.dia)} ${hh}`;
+            });
+            const media = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+            // Estatísticas de uma variável ('t' ou 'u'): pico e mínima vêm da leitura real (com local)
+            const estatisticas = (campo) => {
+                const lista = doPeriodo.filter(l => !isNaN(l[campo]));
+                if (!lista.length) return null;
+                let max = lista[0], min = lista[0];
+                lista.forEach(l => { if (l[campo] > max[campo]) max = l; if (l[campo] < min[campo]) min = l; });
+                const ant = doAnterior.filter(l => !isNaN(l[campo]));
+                return {
+                    media: media(lista.map(l => l[campo])),
+                    mediaAnt: ant.length ? media(ant.map(l => l[campo])) : null,
+                    max: { v: max[campo], dia: max.dia, h: max.h, loc: max.loc, idx: chaves.indexOf(max.chave) },
+                    min: { v: min[campo], dia: min.dia, h: min.h, loc: min.loc, idx: chaves.indexOf(min.chave) },
+                    serie: chaves.map(k => { const m = media(porHora[k][campo]); return m === null ? null : +m.toFixed(2); })
+                };
+            };
+
+            const cartao = (rotulo, icone, cor, valor, sub) => `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><i data-lucide="${icone}" class="w-3.5 h-3.5 ${cor}"></i>${rotulo}</span>
+                    <div class="text-2xl font-black ${cor} mt-1 leading-tight">${valor}</div>
+                    <div class="text-[11px] font-bold text-slate-500 mt-1 leading-snug">${sub}</div>
+                </div>`;
+
+            const montarCartoes = (s, un, dec, nomeMax, nomeMin) => {
+                if (!s) return `<p class="col-span-full text-xs font-bold text-slate-400">Sem leituras no período.</p>`;
+                const onde = x => local === 'TODOS' && x.loc ? ` · <span class="text-slate-700">${esc(x.loc)}</span>` : '';
+                let comp = 'sem dados do período anterior';
+                if (s.mediaAnt !== null) {
+                    const d = s.media - s.mediaAnt;
+                    const corD = Math.abs(d) < 0.05 ? 'text-slate-500' : d > 0 ? 'text-red-500' : 'text-blue-500';
+                    comp = `<span class="${corD}">${d >= 0 ? '▲ +' : '▼ '}${fmt(d, dec)}${un}</span> vs ${resumoDias === 1 ? 'dia anterior' : resumoDias + ' dias anteriores'}`;
+                }
+                return cartao('Média', 'activity', 'text-slate-800', `${fmt(s.media, dec)}${un}`, comp) +
+                    cartao(nomeMax, 'arrow-up', 'text-red-600', `${fmt(s.max.v, dec)}${un}`, quandoResumo(s.max.dia, s.max.h) + onde(s.max)) +
+                    cartao(nomeMin, 'arrow-down', 'text-blue-600', `${fmt(s.min.v, dec)}${un}`, quandoResumo(s.min.dia, s.min.h) + onde(s.min)) +
+                    cartao('Amplitude', 'move-vertical', 'text-amber-600', `${fmt(s.max.v - s.min.v, dec)}${un}`, 'diferença entre o pico e a mínima');
+            };
+
+            const sT = estatisticas('t'), sU = estatisticas('u');
+            document.getElementById('resCardsTemp').innerHTML = montarCartoes(sT, '°C', 1, 'Pico de calor', 'Mais frio');
+            document.getElementById('resCardsUmid').innerHTML = montarCartoes(sU, '%', 0, 'Mais úmido', 'Mais seco');
+
+            assistenteManejo(doPeriodo, sT, sU, local, resumoDias);
+
+            chartResTempInst = graficoResumo('chartResTemp', chartResTempInst, labels, sT, '#ef4444', '°C', 1);
+            chartResUmidInst = graficoResumo('chartResUmid', chartResUmidInst, labels, sU, '#3b82f6', '%', 0);
+
+            document.getElementById('resNota').innerText = local === 'TODOS'
+                ? 'Linha = média de todos os locais em cada hora. Os pontos vermelho (pico) e azul (mínima) são a leitura real mais alta e mais baixa do período, de um único local, por isso podem ficar fora da linha. Linha tracejada = média do período.'
+                : 'Linha = leitura de cada hora. Ponto vermelho = pico, ponto azul = mínima. Linha tracejada = média do período.';
+            lucide.createIcons();
+        }
+
+        // --- ASSISTENTE DE MANEJO (I.A. offline) ---
+        // Regras agronômicas aplicadas às leituras do período, sem internet. Olha o "dia típico"
+        // (média de cada hora do dia) para achar a janela mais quente, a mais úmida, a mais fria
+        // e o melhor horário para irrigar, e compara com o período anterior.
+
+        // Limites por cultura (pelo nome do local); sem cultura conhecida usa o padrão
+        function limitesDoLocal(local) {
+            const l = String(local || '').toUpperCase();
+            const base = { cultura: '', calor: 32, frio: 12, umidAlta: 90, umidBaixa: 40, vpdAlto: 1.5, vpdBaixo: 0.4 };
+            if (l.includes('OÁSIS') || l.includes('OASIS')) return { ...base, cultura: 'Brócolis', calor: 27, frio: 5 };
+            if (l.includes('SEDE') || l === 'ESTUFA 1') return { ...base, cultura: 'Pepino', calor: 32, frio: 15, umidAlta: 88 };
+            if (l === 'ESTUFINHA 1' || l.includes('FÁBRICA')) return { ...base, cultura: 'Ácaros', calor: 30, umidBaixa: 65, vpdAlto: 1.2 };
+            return base;
+        }
+
+        // Abre/fecha o cartão "Sugestão de Manejo"
+        function alternarSugestao() {
+            const corpo = document.getElementById('resAssistenteCorpo');
+            const abrir = corpo.classList.contains('hidden');
+            corpo.classList.toggle('hidden', !abrir);
+            document.getElementById('resAssistenteBtn').setAttribute('aria-expanded', String(abrir));
+            document.getElementById('resAssistenteSeta').classList.toggle('rotate-180', abrir);
+        }
+
+        function assistenteManejo(leituras, sT, sU, local, dias) {
+            const lista = document.getElementById('resAssistenteLista');
+            if (!lista) return;
+            const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+            const lim = limitesDoLocal(local === 'TODOS' ? '' : local);
+            const onde = local === 'TODOS' ? 'nos locais monitorados' : `em ${local}`;
+            document.getElementById('resAssistenteSub').innerText = lim.cultura
+                ? `Limites ajustados para ${lim.cultura} · toque para ver as sugestões do período`
+                : 'Toque para ver as sugestões de irrigação do período';
+
+            const media = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+            const hh = h => String(h).padStart(2, '0') + 'h';
+
+            // Dia típico: média de cada hora do dia (0 a 23)
+            const perfil = Array.from({ length: 24 }, (_, h) => {
+                const daHora = leituras.filter(l => l.h === h);
+                const t = media(daHora.filter(l => !isNaN(l.t)).map(l => l.t));
+                const u = media(daHora.filter(l => !isNaN(l.u)).map(l => l.u));
+                return { h, t, u, vpd: t != null && u != null ? calculateVPD(t, u) : null };
+            });
+            const comT = perfil.filter(p => p.t != null), comU = perfil.filter(p => p.u != null);
+
+            // Maior sequência de horas seguidas que atende a condição -> { ini, fim, horas }
+            const janela = cond => {
+                let melhor = null, atual = null;
+                perfil.forEach(p => {
+                    if (cond(p)) { atual = atual ? { ...atual, fim: p.h } : { ini: p.h, fim: p.h }; }
+                    else atual = null;
+                    if (atual && (!melhor || atual.fim - atual.ini > melhor.fim - melhor.ini)) melhor = { ...atual };
+                });
+                return melhor && { ...melhor, horas: perfil.filter(p => p.h >= melhor.ini && p.h <= melhor.fim) };
+            };
+            const faixa = j => j.ini === j.fim ? `às ${hh(j.ini)}` : `entre ${hh(j.ini)} e ${hh(j.fim + 1)}`;
+
+            const itens = []; // { nivel: 'critico'|'atencao'|'info'|'ok', icone, titulo, texto, acao }
+            const add = (nivel, icone, titulo, texto, acao) => itens.push({ nivel, icone, titulo, texto, acao });
+
+            if (comT.length >= 6) {
+                // 1) Horário mais quente: irrigar antes e durante o pico
+                const pico = comT.reduce((a, b) => b.t > a.t ? b : a);
+                const quente = janela(p => p.t != null && p.t >= pico.t - 1.5);
+                const horasCalor = leituras.filter(l => !isNaN(l.t) && l.t >= lim.calor);
+                const diasCalor = new Set(horasCalor.map(l => l.dia)).size;
+                // Local mais quente na janela (só faz sentido com todos os locais)
+                let localQuente = '';
+                if (local === 'TODOS' && quente) {
+                    const porLocal = {};
+                    leituras.filter(l => !isNaN(l.t) && l.h >= quente.ini && l.h <= quente.fim && l.loc)
+                        .forEach(l => (porLocal[l.loc] = porLocal[l.loc] || []).push(l.t));
+                    const ranking = Object.entries(porLocal).map(([loc, ts]) => [loc, media(ts)]).sort((a, b) => b[1] - a[1]);
+                    if (ranking.length > 1) localQuente = ` O local mais quente nesse horário é <b>${esc(ranking[0][0])}</b> (${fmt(ranking[0][1])}°C em média).`;
+                }
+                if (pico.t >= lim.calor || horasCalor.length) {
+                    const inicio = Math.max(0, quente.ini - 1);
+                    add(pico.t >= lim.calor + 3 ? 'critico' : 'atencao', '🔥', 'Irrigar no horário mais quente',
+                        `O pico do dia típico é às <b>${hh(pico.h)}</b> (${fmt(pico.t)}°C), com calor ${faixa(quente)}. ` +
+                        `Foram <b>${horasCalor.length} h</b> acima de ${lim.calor}°C em ${diasCalor} dia${diasCalor === 1 ? '' : 's'}.${localQuente}`,
+                        `Programe pulsos curtos de irrigação/nebulização nos blocos ${onde} entre <b>${hh(inicio)} e ${hh(quente.fim + 1)}</b>, começando um pouco antes do pico para a planta não entrar em estresse.`);
+                } else {
+                    add('info', '🌤️', 'Horário mais quente sem estresse',
+                        `O pico do dia típico é às <b>${hh(pico.h)}</b> (${fmt(pico.t)}°C), abaixo do limite de ${lim.calor}°C.`,
+                        `Não é preciso reforçar a irrigação no pico; mantenha o turno normal.`);
+                }
+
+                // 2) Frio: evitar irrigar nas horas frias
+                const vale = comT.reduce((a, b) => b.t < a.t ? b : a);
+                if (vale.t <= lim.frio) {
+                    const frio = janela(p => p.t != null && p.t <= lim.frio + 1);
+                    add('atencao', '❄️', 'Evitar irrigar nas horas frias',
+                        `A mínima do dia típico é às <b>${hh(vale.h)}</b> (${fmt(vale.t)}°C)${frio ? `, frio ${faixa(frio)}` : ''}.`,
+                        `Não irrigue nesse horário: água + frio aumentam o risco de dano e de doença. Desloque os turnos para depois que a temperatura subir.`);
+                }
+            }
+
+            if (comU.length >= 6) {
+                // 3) Umidade alta / VPD baixo: reduzir irrigação e não molhar folhas
+                const umida = janela(p => p.u != null && p.u >= lim.umidAlta);
+                const mediaU = sU ? sU.media : null;
+                if (umida || (mediaU != null && mediaU >= lim.umidAlta - 5)) {
+                    add(mediaU >= lim.umidAlta ? 'critico' : 'atencao', '💧', 'Reduzir irrigação (umidade alta)',
+                        `${umida ? `Umidade acima de ${lim.umidAlta}% ${faixa(umida)} no dia típico. ` : ''}Média do período: <b>${fmt(mediaU, 0)}%</b>. Ambiente propício a fungos.`,
+                        `Reduza a lâmina ou o número de pulsos ${onde}${umida ? ` e evite molhar as folhas ${faixa(umida)}` : ''}. Priorize ventilação.`);
+                }
+
+                // 4) Ar seco: VPD alto nas horas quentes ou umidade muito baixa
+                const comVpd = perfil.filter(p => p.vpd != null);
+                const secoVpd = comVpd.length ? comVpd.reduce((a, b) => b.vpd > a.vpd ? b : a) : null;
+                const umidMin = comU.reduce((a, b) => b.u < a.u ? b : a);
+                if ((secoVpd && secoVpd.vpd >= lim.vpdAlto) || umidMin.u <= lim.umidBaixa) {
+                    const seco = janela(p => p.vpd != null && p.vpd >= lim.vpdAlto * 0.9);
+                    add(secoVpd && secoVpd.vpd >= lim.vpdAlto + 0.5 ? 'critico' : 'atencao', '🍂', 'Ar seco: aumentar a frequência',
+                        `${secoVpd ? `VPD de <b>${fmt(secoVpd.vpd, 2)} kPa</b> às ${hh(secoVpd.h)}` : ''}${secoVpd && umidMin ? ' e ' : ''}umidade mínima de <b>${fmt(umidMin.u, 0)}%</b> às ${hh(umidMin.h)}. A planta fecha os estômatos e para de crescer.`,
+                        `Aumente a frequência (pulsos menores e mais vezes) ${seco ? faixa(seco) : 'nas horas secas'}, em vez de uma lâmina grande de uma vez.`);
+                }
+
+                // 5) Melhor horário para irrigar: manhã com VPD baixo e sem frio
+                const manha = perfil.filter(p => p.h >= 4 && p.h <= 10 && p.vpd != null && p.t != null && p.t > lim.frio);
+                if (manha.length) {
+                    const melhor = manha.reduce((a, b) => b.vpd < a.vpd ? b : a);
+                    add('info', '⏰', 'Melhor horário para irrigar',
+                        `No início do dia, a menor perda de água é às <b>${hh(melhor.h)}</b> (${fmt(melhor.t)}°C, ${fmt(melhor.u, 0)}% de umidade).`,
+                        `Concentre a irrigação principal ${onde} entre ${hh(melhor.h)} e ${hh(Math.min(23, melhor.h + 2))}: a água é melhor aproveitada e as folhas secam ao longo do dia.`);
+                }
+            }
+
+            // 6) Tendência vs período anterior
+            const periodoTxt = dias === 1 ? 'o dia anterior' : `os ${dias} dias anteriores`;
+            if (sT && sT.mediaAnt != null) {
+                const d = sT.media - sT.mediaAnt;
+                if (d >= 2) add('atencao', '📈', 'Temperatura subindo',
+                    `A média subiu <b>+${fmt(d)}°C</b> em relação a ${periodoTxt}.`,
+                    `Avalie aumentar a lâmina de irrigação em 10 a 15% ${onde} enquanto o calor continuar.`);
+                else if (d <= -2) add('info', '📉', 'Temperatura caindo',
+                    `A média caiu <b>${fmt(d)}°C</b> em relação a ${periodoTxt}.`,
+                    `Avalie reduzir a lâmina em 10 a 15% ${onde}: com menos calor a planta consome menos água.`);
+            }
+            if (sU && sU.mediaAnt != null && sU.media - sU.mediaAnt >= 10) {
+                add('atencao', '🌧️', 'Umidade subindo',
+                    `A umidade média subiu <b>+${fmt(sU.media - sU.mediaAnt, 0)} pontos</b> em relação a ${periodoTxt}.`,
+                    `Pode ter chovido ou o ambiente está fechado: confira o solo antes de irrigar e reduza se estiver úmido.`);
+            }
+
+            // Selo no cabeçalho fechado: quantos avisos pedem atenção
+            const selo = document.getElementById('resAssistenteSelo');
+            const urgentes = itens.filter(i => i.nivel === 'critico').length;
+            const atencao = itens.filter(i => i.nivel === 'atencao').length;
+            selo.classList.toggle('hidden', !itens.length);
+            if (urgentes) { selo.textContent = `${urgentes} urgente${urgentes > 1 ? 's' : ''}`; selo.className = 'text-[9px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700'; }
+            else if (atencao) { selo.textContent = `${atencao} atenção`; selo.className = 'text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700'; }
+            else if (itens.length) { selo.textContent = 'tudo ok'; selo.className = 'text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700'; }
+
+            if (!itens.length) {
+                lista.innerHTML = `<div class="col-span-full text-xs font-bold text-slate-400 py-3">Poucas leituras no período para gerar sugestões. Tente um período maior.</div>`;
+                return;
+            }
+            if (!itens.some(i => i.nivel === 'critico' || i.nivel === 'atencao')) {
+                itens.unshift({ nivel: 'ok', icone: '✅', titulo: 'Clima dentro do ideal',
+                    texto: `Nenhum estresse de calor, frio, umidade ou ar seco ${onde} no período.`, acao: 'Mantenha a programação de irrigação atual.' });
+            }
+
+            const ESTILO = {
+                critico: { borda: 'border-red-200', faixa: 'bg-red-500', selo: 'bg-red-100 text-red-700', nome: 'Urgente' },
+                atencao: { borda: 'border-amber-200', faixa: 'bg-amber-500', selo: 'bg-amber-100 text-amber-700', nome: 'Atenção' },
+                info:    { borda: 'border-slate-200', faixa: 'bg-brand-500', selo: 'bg-brand-50 text-brand-700', nome: 'Dica' },
+                ok:      { borda: 'border-emerald-200', faixa: 'bg-emerald-500', selo: 'bg-emerald-100 text-emerald-700', nome: 'OK' }
+            };
+            const ordem = { critico: 0, atencao: 1, ok: 2, info: 3 };
+            lista.innerHTML = itens.sort((a, b) => ordem[a.nivel] - ordem[b.nivel]).map(i => {
+                const e = ESTILO[i.nivel];
+                return `
+                <div class="relative bg-white border ${e.borda} rounded-xl p-3.5 pl-4 overflow-hidden shadow-sm">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 ${e.faixa}"></div>
+                    <div class="flex items-start gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-base shrink-0">${i.icone}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[12px] font-black text-slate-800 leading-tight flex items-center gap-1.5 flex-wrap">${i.titulo}
+                                <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${e.selo}">${e.nome}</span></p>
+                            <p class="text-[11px] text-slate-500 leading-snug mt-1">${i.texto}</p>
+                        </div>
+                    </div>
+                    <div class="mt-2.5 ml-[42px] flex items-start gap-1.5 bg-slate-50 border border-slate-200 rounded-lg p-2">
+                        <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5"></i>
+                        <p class="text-[11px] text-slate-700 leading-snug"><span class="text-brand-600 font-black uppercase tracking-wide text-[9px]">Sugestão: </span>${i.acao}</p>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function graficoResumo(id, antigo, labels, s, cor, un, dec) {
+            if (antigo) antigo.destroy();
+            const el = document.getElementById(id);
+            if (!el || !s) return null;
+            const marcador = (x, corPonto, simbolo, alinhar) => ({
+                label: simbolo === '▲' ? 'Pico' : 'Mínima',
+                data: labels.map((_, i) => i === x.idx ? x.v : null),
+                showLine: false, pointRadius: 7, pointHoverRadius: 9,
+                pointBackgroundColor: corPonto, pointBorderColor: '#ffffff', pointBorderWidth: 2,
+                datalabels: {
+                    display: ctx => ctx.dataIndex === x.idx, align: alinhar, anchor: alinhar === 'top' ? 'end' : 'start', offset: 8,
+                    color: '#ffffff', backgroundColor: corPonto, borderRadius: 6, padding: { top: 3, bottom: 3, left: 6, right: 6 },
+                    font: { weight: 'bold', size: 11 }, formatter: () => `${simbolo} ${fmt(x.v, dec)}${un}`
+                },
+                _info: x
+            });
+            const cores = { fundo: cor + '22' };
+            return new Chart(el, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Leitura', data: s.serie, borderColor: cor, backgroundColor: cores.fundo, fill: true, borderWidth: 2,
+                          pointRadius: 0, pointHoverRadius: 4, tension: 0.35, spanGaps: true, datalabels: { display: false } },
+                        { label: 'Média do período', data: labels.map(() => +s.media.toFixed(2)), borderColor: '#94a3b8', borderDash: [6, 4],
+                          borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 0, fill: false, datalabels: { display: false } },
+                        marcador(s.max, '#dc2626', '▲', 'top'),
+                        marcador(s.min, '#2563eb', '▼', 'bottom')
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    layout: { padding: { top: 30, bottom: 10, left: 4, right: 12 } },
+                    plugins: {
+                        legend: { labels: { usePointStyle: true, font: { weight: 'bold' } } },
+                        tooltip: {
+                            filter: item => item.raw !== null,
+                            callbacks: {
+                                label: ctx => {
+                                    const v = `${fmt(ctx.parsed.y, dec)}${un}`;
+                                    const info = ctx.dataset._info;
+                                    return info ? `${ctx.dataset.label}: ${v}${info.loc ? ' · ' + info.loc : ''}` : `${ctx.dataset.label}: ${v}`;
+                                }
+                            }
+                        },
+                        datalabels: { clip: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+                        y: { grace: '15%', grid: { borderDash: [4, 4] }, title: { display: true, text: un, font: { weight: 'bold' } },
+                             ticks: { callback: v => v.toLocaleString('pt-BR') } }
+                    }
+                }
+            });
+        }
+
+        function preparePrintResumo() {
+            document.getElementById('pr_Info').innerText = document.getElementById('resInfo').innerText;
+            document.getElementById('pr_Data').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('pr_Assistente').innerHTML = document.getElementById('resAssistenteLista').innerHTML;
+            document.getElementById('pr_CardsTemp').innerHTML = document.getElementById('resCardsTemp').innerHTML;
+            document.getElementById('pr_CardsUmid').innerHTML = document.getElementById('resCardsUmid').innerHTML;
+            if (chartResTempInst) document.getElementById('pr_ImgTemp').src = chartResTempInst.toBase64Image();
+            if (chartResUmidInst) document.getElementById('pr_ImgUmid').src = chartResUmidInst.toBase64Image();
         }
 
         // --- 3. FILTROS E DROPDOWNS MULTIPLOS ---
@@ -1105,7 +1954,8 @@
 
         // --- 4. IMPRESSÃO EM PDF ---
         function preparePrint() {
-            if (currentTab === 'DASH') preparePrintDashboard();
+            if (currentTab === 'RESUMO') preparePrintResumo();
+            else if (currentTab === 'DASH') preparePrintDashboard();
             else if (currentTab === 'TABELA') preparePrintTable();
             else if (currentTab === 'DETALHADA') preparePrintDetalhada();
             else if (currentTab === 'COMPARE') preparePrintComparativo();
