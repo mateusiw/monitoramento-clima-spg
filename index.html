@@ -107,6 +107,9 @@
             #syncOverlay, .print\:hidden { display: none !important; }
         }
 
+        /* Gráficos no toque: o navegador só rola na vertical; arrastar de lado fica com o gráfico */
+        canvas { touch-action: pan-y; -webkit-touch-callout: none; }
+
         .sticky-col { position: sticky; left: 0; z-index: 20; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .sticky-header { position: sticky; top: 0; z-index: 30; }
 
@@ -1282,6 +1285,29 @@
 
             celular.addEventListener('change', () => { if (!celular.matches) barra.classList.remove('recolhida', 'teclado'); });
         }
+
+        // --- GRÁFICOS NO CELULAR: arrastar o dedo de lado trava a rolagem da página ---
+        // O primeiro movimento decide: se foi para o lado, a página fica parada até soltar o dedo
+        // (dá para correr o gráfico e ver os picos); se foi para cima/baixo, a página rola normal.
+        document.querySelectorAll('canvas').forEach(canvas => {
+            let toque = null; // { x, y, travar: null | true | false }
+            canvas.addEventListener('touchstart', e => {
+                toque = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, travar: null } : null;
+            }, { passive: true });
+            canvas.addEventListener('touchmove', e => {
+                if (!toque) return;
+                const t = e.touches[0];
+                if (toque.travar === null) {
+                    const dx = Math.abs(t.clientX - toque.x), dy = Math.abs(t.clientY - toque.y);
+                    if (dx < 6 && dy < 6) return;
+                    toque.travar = dx >= dy;
+                }
+                if (toque.travar && e.cancelable) e.preventDefault();
+            }, { passive: false });
+            const soltar = () => { toque = null; };
+            canvas.addEventListener('touchend', soltar);
+            canvas.addEventListener('touchcancel', soltar);
+        });
 
         // --- MENUS DE ESCOLHA MODERNOS ---
         // Cada <select> da tela ganha um botão e uma lista própria. O <select> continua na página
